@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'home_screen.dart'; // Add your home screen import
+import 'faculty_dashboard.dart'; // Add your faculty dashboard import
+import 'forgot_password_screen.dart'; // Add your forgot password screen import
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -66,6 +68,18 @@ class _LoginScreenState extends State<LoginScreen> {
             ),
           );
         }
+      } else if (username == "faculty" && password == "password123") {
+        if (mounted) {
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(
+              builder: (context) => const FacultyDashboard(
+                facultyName: "Dr. John Doe",
+                department: "Computer Science",
+              ),
+            ),
+          );
+        }
       } else {
         throw Exception('Invalid credentials');
       }
@@ -120,6 +134,18 @@ class _LoginScreenState extends State<LoginScreen> {
                   child: _isLoading
                       ? const CircularProgressIndicator()
                       : const Text('Login'),
+                ),
+                const SizedBox(height: 16),
+                TextButton(
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const ForgotPasswordScreen(),
+                      ),
+                    );
+                  },
+                  child: const Text('Forgot Password?'),
                 ),
               ],
             ),

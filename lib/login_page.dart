@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'admin_dashboard.dart';
 import 'faculty_dashboard.dart';
+import 'forgot_password_screen.dart'; // Add your forgot password screen import
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -250,7 +251,13 @@ class _LoginPageState extends State<LoginPage>
                         const SizedBox(height: 20),
                         TextButton(
                           onPressed: () {
-                            // Handle forgot password
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) =>
+                                    const ForgotPasswordScreen(),
+                              ),
+                            );
                           },
                           child: Text(
                             'Forgot Password?',

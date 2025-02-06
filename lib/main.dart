@@ -1,16 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'login_page.dart';
-import 'utils/theme_provider.dart';
+import 'theme_provider.dart';
 import 'utils/responsive_util.dart';
 import 'utils/lab_hours_provider.dart';
 
-void main() async {
-  WidgetsFlutterBinding.ensureInitialized();
+void main() {
   final themeProvider = ThemeProvider();
   final labHoursProvider = LabHoursProvider();
-  await Future.delayed(
-      const Duration(milliseconds: 100)); // Wait for theme to load
 
   runApp(
     MultiProvider(

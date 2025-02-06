@@ -472,8 +472,7 @@ class _FacultyManagementState extends State<FacultyManagement> {
       builder: (context) => StatefulBuilder(
         builder: (context, setState) => Dialog(
           backgroundColor: const Color.fromRGBO(34, 39, 42, 1),
-          shape:
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
           child: SingleChildScrollView(
             child: Padding(
               padding: const EdgeInsets.all(16),
@@ -511,8 +510,7 @@ class _FacultyManagementState extends State<FacultyManagement> {
                         color: accentColor.withOpacity(0.3),
                       ),
                     ),
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
                     child: DropdownButtonHideUnderline(
                       child: DropdownButton<String>(
                         value: selectedDesignation,
@@ -523,8 +521,7 @@ class _FacultyManagementState extends State<FacultyManagement> {
                         ),
                         icon: Icon(Icons.arrow_drop_down, color: accentColor),
                         items: designations.map((designation) {
-                          bool isDisabled = designation == 'Dean' &&
-                              _hasDean(selectedDepartment!);
+                          bool isDisabled = designation == 'Dean' && _hasDean(selectedDepartment!);
                           return DropdownMenuItem<String>(
                             value: designation,
                             enabled: !isDisabled,
@@ -543,8 +540,7 @@ class _FacultyManagementState extends State<FacultyManagement> {
                                 Text(
                                   designation,
                                   style: TextStyle(
-                                    color:
-                                        isDisabled ? Colors.grey : Colors.white,
+                                    color: isDisabled ? Colors.grey : Colors.white,
                                   ),
                                 ),
                                 if (isDisabled)
@@ -571,28 +567,28 @@ class _FacultyManagementState extends State<FacultyManagement> {
                       ),
                     ),
                   ),
-                  SizedBox(height: 16),
+                  const SizedBox(height: 16),
                   _buildDialogTextField(
                     controller: emailController,
                     label: 'Email',
                     icon: Icons.email,
                     textColor: const Color.fromRGBO(159, 160, 162, 1),
                   ),
-                  SizedBox(height: 16),
+                  const SizedBox(height: 16),
                   _buildDialogTextField(
                     controller: phoneController,
                     label: 'Phone',
                     icon: Icons.phone,
                     textColor: const Color.fromRGBO(159, 160, 162, 1),
                   ),
-                  SizedBox(height: 16),
+                  const SizedBox(height: 16),
                   _buildDialogTextField(
                     controller: usernameController,
                     label: 'Username',
                     icon: Icons.account_circle,
                     textColor: const Color.fromRGBO(159, 160, 162, 1),
                   ),
-                  SizedBox(height: 16),
+                  const SizedBox(height: 16),
                   _buildDialogTextField(
                     controller: passwordController,
                     label: 'Password',
@@ -600,7 +596,7 @@ class _FacultyManagementState extends State<FacultyManagement> {
                     isPassword: true,
                     textColor: const Color.fromRGBO(159, 160, 162, 1),
                   ),
-                  SizedBox(height: 16),
+                  const SizedBox(height: 16),
                   InkWell(
                     onTap: () async {
                       final date = await showDatePicker(
@@ -614,8 +610,7 @@ class _FacultyManagementState extends State<FacultyManagement> {
                               colorScheme: ColorScheme.dark(
                                 primary: accentColor,
                                 surface: const Color.fromRGBO(24, 29, 32, 1),
-                                onSurface:
-                                    const Color.fromRGBO(159, 160, 162, 1),
+                                onSurface: const Color.fromRGBO(159, 160, 162, 1),
                               ),
                             ),
                             child: child!,
@@ -709,6 +704,7 @@ class _FacultyManagementState extends State<FacultyManagement> {
                             facultyData[selectedDepartment!]!.add(newFaculty);
                             hasUnsavedChanges = true;
                           });
+
                           Navigator.pop(context);
                         },
                         child: const Text(
@@ -848,6 +844,9 @@ class _FacultyManagementState extends State<FacultyManagement> {
               setState(() {
                 hasUnsavedChanges = false;
               });
+
+              // TODO: Save all unsaved changes to the database here
+
               Navigator.pop(context);
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(
@@ -1204,7 +1203,7 @@ class _FacultyManagementState extends State<FacultyManagement> {
     );
   }
 
-  Widget _buildFacultyCard(Faculty faculty) {
+  Widget _buildFacultyCard(Faculty faculty, {bool isNew = false}) {
     // Get icon and color based on designation
     IconData getDesignationIcon() {
       switch (faculty.designation) {
@@ -1253,11 +1252,12 @@ class _FacultyManagementState extends State<FacultyManagement> {
     return InkWell(
       onTap: () => _showFacultyDetails(faculty),
       child: Card(
+        color: const Color.fromRGBO(34, 39, 42, 1), // Change the card color
         elevation: isDean ? 4 : 1,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(12),
           side: BorderSide(
-            color: designationColor.withOpacity(0.5),
+            color: isNew ? Colors.orange : designationColor.withOpacity(0.5),
             width: isDean ? 2 : 1,
           ),
         ),
@@ -1271,7 +1271,7 @@ class _FacultyManagementState extends State<FacultyManagement> {
           ),
           title: Row(
             children: [
-              Text(faculty.name),
+              Text(faculty.name, style: const TextStyle(color: Colors.white)),
               if (isDean)
                 Container(
                   margin: EdgeInsets.only(left: 8),
@@ -1295,7 +1295,7 @@ class _FacultyManagementState extends State<FacultyManagement> {
           subtitle: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(faculty.department),
+              Text(faculty.department, style: const TextStyle(color: Colors.white70)),
               Text(
                 isDean ? 'Dean of ${faculty.department}' : faculty.designation,
                 style: TextStyle(
@@ -1309,11 +1309,11 @@ class _FacultyManagementState extends State<FacultyManagement> {
             mainAxisSize: MainAxisSize.min,
             children: [
               IconButton(
-                icon: Icon(Icons.edit),
+                icon: Icon(Icons.edit, color: accentColor),
                 onPressed: () => _showEditFacultyDialog(faculty),
               ),
               IconButton(
-                icon: Icon(Icons.delete),
+                icon: Icon(Icons.delete, color: accentColor),
                 onPressed: isDean
                     ? () => _showDeanDeleteWarning(faculty)
                     : () => _showDeleteConfirmation(faculty),

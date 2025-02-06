@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'pages/unavailability_page.dart';
 import 'faculty/settings_page.dart';
+import 'faculty/faculty_profile_page.dart';
 
 class FacultyDashboard extends StatefulWidget {
   final String facultyName;
@@ -72,6 +73,8 @@ class CoverageRequest {
 class _FacultyDashboardState extends State<FacultyDashboard>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
+  late double screenWidth;
+  late double screenHeight;
 
   // Define colors
   static const backgroundColor = Color.fromRGBO(24, 29, 32, 1);
@@ -80,15 +83,20 @@ class _FacultyDashboardState extends State<FacultyDashboard>
   static const textColor = Color.fromRGBO(159, 160, 162, 1);
 
   final List<String> timeSlots = [
-    '8:50 - 9:40',
-    '9:45 - 10:35',
-    '10:40 - 11:30',
-    '11:35 - 12:25',
-    '1:05 - 1:55',
-    '2:00 - 2:50',
-    '2:55 - 3:45',
-    '3:50 - 4:40',
+    '8:50 - 9:40', // Period 0 (optional)
+    '9:45 - 10:35', // Period 1
+    '10:40 - 11:30', // Period 2
+    '11:35 - 12:25', // Period 3
+    '1:05 - 1:55', // Period 4
+    '2:00 - 2:50', // Period 5
+    '2:55 - 3:45', // Period 6
+    '3:50 - 4:40', // Period 7 (optional)
   ];
+
+  // Add helper method to check if period is optional
+  bool isOptionalPeriod(int periodIndex) {
+    return periodIndex == 0 || periodIndex == 7;
+  }
 
   Map<String, List<int>> unavailablePeriods = {};
 
@@ -122,69 +130,109 @@ class _FacultyDashboardState extends State<FacultyDashboard>
     ),
   ];
 
+  // TODO: Implement Firebase integration for lab schedules
+  // Lab schedules should be fetched from Firebase and merged with regular class schedule
+  // Structure in Firebase should include:
+  // - Lab subject
+  // - Duration (typically 4 periods)
+  // - Lab room
+  // - Student batch/section
+
   Map<String, Map<int, String>> classSchedule = {
     'Monday': {
-      0: 'I BSc B (Lab)',
+      0: 'I BSc B (Lab)', // Morning lab session
       1: 'I BSc B (Lab)',
       2: 'I BSc B (Lab)',
       3: 'I BSc B (Lab)',
-      5: 'III BCA B',
-      6: 'I BSc C',
-      7: 'II BCA A',
+      4: 'III BCA B',
+      5: 'I BSc C',
     },
     'Tuesday': {
       1: 'II BCA A',
       2: 'III BSc B',
       3: 'I BCA C',
+      4: 'II BSc A (Lab)', // Afternoon lab session
       5: 'II BSc A (Lab)',
-      6: 'II BSc A (Lab)',
     },
     'Wednesday': {
       0: 'III BCA A',
       1: 'I BSc B',
-      3: 'II BCA B',
-      4: 'III BSc A',
-      6: 'I BCA A (Lab)',
-      7: 'I BCA A (Lab)',
+      2: 'II BCA B',
+      3: 'III BSc A',
+      4: 'I BCA A (Lab)', // Afternoon lab session
+      5: 'I BCA A (Lab)',
     },
     'Thursday': {
       1: 'II BSc B',
       2: 'III BCA C',
-      4: 'I BSc A (Lab)',
+      3: 'II BCA C',
+      4: 'I BSc A (Lab)', // Afternoon lab session
       5: 'I BSc A (Lab)',
-      6: 'II BCA C',
     },
     'Friday': {
       0: 'III BSc C',
       1: 'II BCA B',
       2: 'I BSc A',
+      3: 'III BCA B (Lab)', // Afternoon lab session
       4: 'III BCA B (Lab)',
-      5: 'III BCA B (Lab)',
-      7: 'II BSc C',
+      5: 'II BSc C',
+    },
+    'Saturday': {
+      0: 'III BSc A',
+      1: 'II BCA B',
+      2: 'I BSc C',
     },
   };
+
+  bool shouldShowPeriod(String day, int periodIndex, bool isLab) {
+    // For Saturday, only show first 3 periods
+    if (day == 'Saturday') {
+      return periodIndex <= 3;
+    }
+
+    // For lab sessions that extend beyond regular hours
+    if (isLab) {
+      // Morning lab (0-3) or Afternoon lab (4-7)
+      if (periodIndex >= 0 && periodIndex <= 3) {
+        return true;
+      }
+      if (periodIndex >= 4 && periodIndex <= 5) {
+        return true;
+      }
+    }
+
+    // Regular periods (0-5)
+    return periodIndex <= 5;
+  }
 
   Map<CoverageRequest, String> requestStatus =
       {}; // Stores request -> status mapping
 
   List<CoverageRequest> declinedRequests = []; // Store declined requests
 
-  // Add this sample faculty profile data
-  final Map<String, dynamic> facultyProfile = {
-    'name': 'Dr. Rajesh Kumar',
-    'designation': 'Associate Professor',
-    'department': 'Computer Science',
-    'email': 'rajesh.kumar@college.edu',
-    'phone': '+91 98765 43210',
-    'qualification': 'Ph.D in Computer Science',
-    'dob': '15-05-1980',
-    'experience': '12 years',
-  };
+  // Add these variables to store faculty profile data
+  late String _facultyName;
+  late String _designation;
+  late String _experience;
+  late String _qualifications;
+  late List<String> _subjects;
+  late String _email;
+  late String _phone;
+  String? _profileImageUrl;
 
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
+    // Initialize with default values
+    // TODO: Fetch these values from Firebase/database
+    _facultyName = widget.facultyName;
+    _designation = 'Associate Professor';
+    _experience = '8+ Years';
+    _qualifications = 'Ph.D in Computer Science\nM.Tech in Computer Science';
+    _subjects = ['Machine Learning', 'Data Structures', 'Algorithms'];
+    _email = 'faculty@example.com';
+    _phone = '+91 9876543210';
   }
 
   @override
@@ -193,25 +241,109 @@ class _FacultyDashboardState extends State<FacultyDashboard>
     super.dispose();
   }
 
+  bool isLabPeriod(String day, int periodIndex) {
+    final schedule = classSchedule[day];
+    if (schedule == null) return false;
+
+    // Check if current period is marked as lab
+    final currentClass = schedule[periodIndex];
+    if (currentClass == null) return false;
+
+    if (currentClass.contains('Lab')) {
+      // Verify if it's part of a 4-period block
+      // Morning lab block (0-3) or afternoon lab block (4-7)
+      if (periodIndex >= 0 && periodIndex <= 3) {
+        // Check if all morning periods are same lab
+        return schedule[0] == currentClass &&
+            schedule[1] == currentClass &&
+            schedule[2] == currentClass &&
+            schedule[3] == currentClass;
+      } else if (periodIndex >= 4 && periodIndex <= 7) {
+        // Check if all afternoon periods are same lab
+        return schedule[4] == currentClass &&
+            schedule[5] == currentClass &&
+            schedule[6] == currentClass &&
+            schedule[7] == currentClass;
+      }
+    }
+    return false;
+  }
+
   @override
   Widget build(BuildContext context) {
+    // Initialize screen dimensions at build time
+    screenWidth = MediaQuery.of(context).size.width;
+    screenHeight = MediaQuery.of(context).size.height;
+
     return Scaffold(
       backgroundColor: backgroundColor,
       appBar: AppBar(
         backgroundColor: cardColor,
-        title: Text(
-          'Dashboard',
-          style: TextStyle(
-            color: textColor,
-            fontSize: 20,
+        leading: Padding(
+          padding: EdgeInsets.all(8.0),
+          child: InkWell(
+            onTap: () {
+              setState(() {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => FacultyProfilePage(
+                      facultyName: _facultyName,
+                      department: widget.department,
+                      designation: _designation,
+                      experience: _experience,
+                      qualifications: _qualifications,
+                      subjects: _subjects,
+                      email: _email,
+                      phone: _phone,
+                    ),
+                  ),
+                );
+              });
+            },
+            child: CircleAvatar(
+              backgroundColor: accentColor,
+              child: Text(
+                _facultyName.substring(0, 1),
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: screenWidth * 0.04,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
           ),
+        ),
+        title: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              _facultyName,
+              style: TextStyle(
+                color: textColor,
+                fontSize: screenWidth * 0.045,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            Text(
+              widget.department,
+              style: TextStyle(
+                color: textColor.withOpacity(0.7),
+                fontSize: screenWidth * 0.03,
+              ),
+            ),
+          ],
         ),
         actions: [
           IconButton(
             icon: Stack(
               children: [
                 Icon(Icons.notifications_outlined, color: textColor),
-                if (requestStatus.isNotEmpty)
+                if (requestStatus.entries
+                            .where((e) => e.value == 'accepted')
+                            .length +
+                        declinedRequests.length >
+                    0)
                   Positioned(
                     right: 0,
                     top: 0,
@@ -222,10 +354,14 @@ class _FacultyDashboardState extends State<FacultyDashboard>
                         shape: BoxShape.circle,
                       ),
                       child: Text(
-                        requestStatus.length.toString(),
+                        (requestStatus.entries
+                                    .where((e) => e.value == 'accepted')
+                                    .length +
+                                declinedRequests.length)
+                            .toString(),
                         style: TextStyle(
                           color: Colors.white,
-                          fontSize: 10,
+                          fontSize: screenWidth * 0.025,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
@@ -237,16 +373,61 @@ class _FacultyDashboardState extends State<FacultyDashboard>
           ),
           IconButton(
             icon: Icon(Icons.settings_outlined, color: textColor),
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => FacultySettingsPage(
-                    facultyName: widget.facultyName,
-                    department: widget.department,
+            onPressed: () async {
+              try {
+                final result = await Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => FacultySettingsPage(
+                      facultyName: _facultyName,
+                      department: widget.department,
+                      designation: _designation,
+                      experience: _experience,
+                      qualifications: _qualifications,
+                      subjects: _subjects,
+                      email: _email,
+                      phone: _phone,
+                      profileImageUrl: _profileImageUrl,
+                      onChanged: (value) {
+                        setState(() {
+                          _designation = value;
+                        });
+                      },
+                    ),
                   ),
-                ),
-              );
+                );
+
+                if (result != null && mounted) {
+                  setState(() {
+                    _facultyName = result['name'];
+                    _designation = result['designation'];
+                    _experience = result['experience'];
+                    _qualifications = result['qualifications'];
+                    _subjects = (result['subjects'] as String)
+                        .split(',')
+                        .map((e) => e.trim())
+                        .toList();
+                    _email = result['email'];
+                    _phone = result['phone'];
+                    _profileImageUrl = result['profileImageUrl'];
+                  });
+
+                  // Rebuild the UI immediately
+                  if (mounted) {
+                    setState(() {});
+                  }
+                }
+              } catch (e) {
+                print('Error navigating to settings: $e');
+                if (mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('Error updating profile'),
+                      backgroundColor: Colors.red,
+                    ),
+                  );
+                }
+              }
             },
           ),
           const SizedBox(width: 8),
@@ -255,86 +436,15 @@ class _FacultyDashboardState extends State<FacultyDashboard>
       body: SafeArea(
         child: Column(
           children: [
-            // Header with click functionality
-            InkWell(
-              onTap: () => _showFacultyDetails(context),
-              child: Container(
-                padding: const EdgeInsets.all(20),
-                decoration: BoxDecoration(
-                  color: cardColor,
-                  borderRadius: const BorderRadius.only(
-                    bottomLeft: Radius.circular(30),
-                    bottomRight: Radius.circular(30),
-                  ),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.1),
-                      blurRadius: 10,
-                      offset: const Offset(0, 5),
-                    ),
-                  ],
-                ),
-                child: Column(
-                  children: [
-                    Row(
-                      children: [
-                        CircleAvatar(
-                          radius: 30,
-                          backgroundColor: accentColor,
-                          child: Text(
-                            widget.facultyName.substring(0, 1),
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 24,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 16),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                widget.facultyName,
-                                style: const TextStyle(
-                                  color: textColor,
-                                  fontSize: 24,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                              Text(
-                                widget.department,
-                                style: TextStyle(
-                                  color: textColor.withOpacity(0.7),
-                                  fontSize: 14,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        Icon(
-                          Icons.arrow_forward_ios,
-                          color: accentColor,
-                          size: 16,
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 16),
-                    _buildTodaySchedule(), // Add today's schedule preview
-                  ],
-                ),
-              ),
-            ),
-
-            // Main Content
+            SizedBox(height: screenHeight * 0.02), // Add top padding
+            _buildTodaySchedule(),
             Expanded(
               child: ListView(
                 padding: const EdgeInsets.all(20),
                 children: [
                   // Main Content - Compact Unavailability Card
                   Container(
-                    height: 100, // Fixed compact height
+                    height: screenHeight * 0.12,
                     decoration: BoxDecoration(
                       color: cardColor,
                       borderRadius: BorderRadius.circular(20),
@@ -362,7 +472,7 @@ class _FacultyDashboardState extends State<FacultyDashboard>
                                 ),
                               ),
                               const SizedBox(width: 16),
-                              const Column(
+                              Column(
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
@@ -370,7 +480,7 @@ class _FacultyDashboardState extends State<FacultyDashboard>
                                     'Mark Unavailability',
                                     style: TextStyle(
                                       color: textColor,
-                                      fontSize: 18,
+                                      fontSize: screenWidth * 0.04,
                                       fontWeight: FontWeight.bold,
                                     ),
                                   ),
@@ -378,16 +488,16 @@ class _FacultyDashboardState extends State<FacultyDashboard>
                                     'View and update your schedule',
                                     style: TextStyle(
                                       color: textColor,
-                                      fontSize: 14,
+                                      fontSize: screenWidth * 0.03,
                                     ),
                                   ),
                                 ],
                               ),
                               const Spacer(),
-                              const Icon(
+                              Icon(
                                 Icons.arrow_forward_ios,
                                 color: accentColor,
-                                size: 20,
+                                size: screenWidth * 0.035,
                               ),
                             ],
                           ),
@@ -411,24 +521,7 @@ class _FacultyDashboardState extends State<FacultyDashboard>
                     const SizedBox(height: 10),
                     ...coverageNotifications.map(
                         (notification) => _buildNotificationCard(notification)),
-                  ] else
-                    Container(
-                      padding: const EdgeInsets.all(20),
-                      decoration: BoxDecoration(
-                        color: cardColor,
-                        borderRadius: BorderRadius.circular(15),
-                        border: Border.all(color: accentColor.withOpacity(0.2)),
-                      ),
-                      child: const Center(
-                        child: Text(
-                          'No coverage notifications yet',
-                          style: TextStyle(
-                            color: textColor,
-                            fontSize: 16,
-                          ),
-                        ),
-                      ),
-                    ),
+                  ],
 
                   if (incomingRequests.isNotEmpty) ...[
                     const SizedBox(height: 20),
@@ -480,7 +573,7 @@ class _FacultyDashboardState extends State<FacultyDashboard>
                 timeAgo(notification.acceptedTime),
                 style: TextStyle(
                   color: textColor.withOpacity(0.7),
-                  fontSize: 12,
+                  fontSize: screenWidth * 0.03,
                 ),
               ),
             ],
@@ -563,58 +656,68 @@ class _FacultyDashboardState extends State<FacultyDashboard>
 
     return StatefulBuilder(
       builder: (context, setState) => Container(
-        margin: const EdgeInsets.only(bottom: 15),
+        margin:
+            EdgeInsets.only(bottom: MediaQuery.of(context).size.height * 0.02),
         decoration: BoxDecoration(
           color: cardColor,
-          borderRadius: BorderRadius.circular(20),
+          borderRadius:
+              BorderRadius.circular(MediaQuery.of(context).size.width * 0.05),
           border: Border.all(color: accentColor.withOpacity(0.2)),
           boxShadow: [
             BoxShadow(
               color: Colors.black.withOpacity(0.2),
-              blurRadius: 8,
-              offset: const Offset(0, 4),
+              blurRadius: MediaQuery.of(context).size.width * 0.02,
+              offset: Offset(0, MediaQuery.of(context).size.height * 0.005),
             ),
           ],
         ),
         child: Column(
+          mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // Header with gradient
             Container(
-              padding: const EdgeInsets.all(15),
+              padding: EdgeInsets.symmetric(
+                vertical: MediaQuery.of(context).size.height * 0.015,
+                horizontal: MediaQuery.of(context).size.width * 0.04,
+              ),
               decoration: BoxDecoration(
                 gradient: LinearGradient(
                   colors: [accentColor.withOpacity(0.8), accentColor],
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                 ),
-                borderRadius: const BorderRadius.only(
-                  topLeft: Radius.circular(20),
-                  topRight: Radius.circular(20),
+                borderRadius: BorderRadius.only(
+                  topLeft:
+                      Radius.circular(MediaQuery.of(context).size.width * 0.05),
+                  topRight:
+                      Radius.circular(MediaQuery.of(context).size.width * 0.05),
                 ),
               ),
               child: Row(
                 children: [
                   CircleAvatar(
+                    radius: MediaQuery.of(context).size.width * 0.04,
                     backgroundColor: Colors.white.withOpacity(0.2),
                     child: Text(
                       request.requestingFaculty[0],
-                      style: const TextStyle(
+                      style: TextStyle(
                         color: Colors.white,
+                        fontSize: MediaQuery.of(context).size.width * 0.03,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
                   ),
-                  const SizedBox(width: 12),
+                  SizedBox(width: MediaQuery.of(context).size.width * 0.03),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
                           request.requestingFaculty,
-                          style: const TextStyle(
+                          style: TextStyle(
                             color: Colors.white,
-                            fontSize: 16,
+                            fontSize: MediaQuery.of(context).size.width * 0.04,
                             fontWeight: FontWeight.bold,
                           ),
                         ),
@@ -622,24 +725,27 @@ class _FacultyDashboardState extends State<FacultyDashboard>
                           timeAgo(request.requestTime),
                           style: TextStyle(
                             color: Colors.white.withOpacity(0.8),
-                            fontSize: 12,
+                            fontSize: MediaQuery.of(context).size.width * 0.03,
                           ),
                         ),
                       ],
                     ),
                   ),
                   Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    padding: EdgeInsets.symmetric(
+                      horizontal: MediaQuery.of(context).size.width * 0.02,
+                      vertical: MediaQuery.of(context).size.height * 0.005,
+                    ),
                     decoration: BoxDecoration(
                       color: Colors.white.withOpacity(0.2),
-                      borderRadius: BorderRadius.circular(15),
+                      borderRadius: BorderRadius.circular(
+                          MediaQuery.of(context).size.width * 0.03),
                     ),
                     child: Text(
                       '${request.date.day}/${request.date.month}/${request.date.year}',
-                      style: const TextStyle(
+                      style: TextStyle(
                         color: Colors.white,
-                        fontSize: 12,
+                        fontSize: MediaQuery.of(context).size.width * 0.03,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
@@ -649,22 +755,22 @@ class _FacultyDashboardState extends State<FacultyDashboard>
             ),
             // Period chips
             Padding(
-              padding: const EdgeInsets.all(15),
+              padding: EdgeInsets.all(MediaQuery.of(context).size.width * 0.04),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
+                  Text(
                     'Select periods to cover:',
                     style: TextStyle(
                       color: textColor,
-                      fontSize: 14,
+                      fontSize: MediaQuery.of(context).size.width * 0.035,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
-                  const SizedBox(height: 12),
+                  SizedBox(height: MediaQuery.of(context).size.height * 0.015),
                   Wrap(
-                    spacing: 8,
-                    runSpacing: 12,
+                    spacing: MediaQuery.of(context).size.width * 0.02,
+                    runSpacing: MediaQuery.of(context).size.width * 0.02,
                     children: request.periodClassMap.entries.map((entry) {
                       final period = entry.key;
                       final className = entry.value;
@@ -737,7 +843,7 @@ class _FacultyDashboardState extends State<FacultyDashboard>
                                           : isAvailable
                                               ? accentColor
                                               : Colors.red,
-                                      fontSize: 12,
+                                      fontSize: screenWidth * 0.035,
                                       fontWeight: FontWeight.bold,
                                     ),
                                   ),
@@ -747,17 +853,17 @@ class _FacultyDashboardState extends State<FacultyDashboard>
                                       color: isSelected
                                           ? Colors.white.withOpacity(0.9)
                                           : textColor,
-                                      fontSize: 11,
+                                      fontSize: screenWidth * 0.035,
                                     ),
                                   ),
                                 ],
                               ),
                               if (!isAvailable) ...[
-                                const SizedBox(width: 8),
+                                SizedBox(width: screenWidth * 0.02),
                                 Icon(
                                   Icons.warning,
                                   color: Colors.red,
-                                  size: 14,
+                                  size: screenWidth * 0.035,
                                 ),
                               ],
                             ],
@@ -784,26 +890,26 @@ class _FacultyDashboardState extends State<FacultyDashboard>
                 children: [
                   TextButton.icon(
                     onPressed: () => _declineRequest(request),
-                    icon: const Icon(Icons.close, size: 18),
+                    icon: Icon(Icons.close, size: screenWidth * 0.035),
                     label: const Text('Decline'),
                     style: TextButton.styleFrom(
                       foregroundColor: textColor,
                     ),
                   ),
-                  const SizedBox(width: 12),
+                  SizedBox(width: screenWidth * 0.02),
                   ElevatedButton.icon(
                     onPressed: selectedPeriods.isEmpty
                         ? null
                         : () => _acceptRequest(request,
                             selectedPeriods: selectedPeriods),
-                    icon: const Icon(Icons.check, size: 18),
+                    icon: Icon(Icons.check, size: screenWidth * 0.035),
                     label: const Text('Accept Selected'),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: accentColor,
                       foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 20,
-                        vertical: 12,
+                      padding: EdgeInsets.symmetric(
+                        horizontal: screenWidth * 0.04,
+                        vertical: screenWidth * 0.02,
                       ),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(10),
@@ -846,21 +952,8 @@ class _FacultyDashboardState extends State<FacultyDashboard>
       // Add to accepted requests
       requestStatus[acceptedRequest] = 'accepted';
 
-      // If there are unselected periods, add them to declined
-      Map<String, String> declinedClasses = Map.from(request.periodClassMap)
-        ..removeWhere((key, _) => selectedPeriods.contains(key));
-
-      if (declinedClasses.isNotEmpty) {
-        CoverageRequest declinedRequest = CoverageRequest(
-          requestingFaculty: request.requestingFaculty,
-          date: request.date,
-          periodClassMap: declinedClasses,
-          availablePeriods: request.availablePeriods,
-          isLab: request.isLab,
-          requestTime: DateTime.now(),
-        );
-        declinedRequests.add(declinedRequest);
-      }
+      // Only add to declined requests if explicitly declined
+      // Removing the code that adds unselected periods to declined requests
 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -938,7 +1031,7 @@ class _FacultyDashboardState extends State<FacultyDashboard>
       backgroundColor: Colors.transparent,
       isScrollControlled: true,
       builder: (context) => Container(
-        height: MediaQuery.of(context).size.height * 0.8,
+        height: screenHeight * 0.8,
         decoration: BoxDecoration(
           color: backgroundColor,
           borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
@@ -968,12 +1061,12 @@ class _FacultyDashboardState extends State<FacultyDashboard>
               child: Row(
                 children: [
                   Icon(Icons.history, color: Colors.white),
-                  SizedBox(width: 12),
+                  SizedBox(width: screenWidth * 0.02),
                   Text(
                     'Notification History',
                     style: TextStyle(
                       color: Colors.white,
-                      fontSize: 20,
+                      fontSize: screenWidth * 0.04,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
@@ -1055,7 +1148,9 @@ class _FacultyDashboardState extends State<FacultyDashboard>
                 ),
               ),
               Container(
-                padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                padding: EdgeInsets.symmetric(
+                    horizontal: screenWidth * 0.02,
+                    vertical: screenWidth * 0.01),
                 decoration: BoxDecoration(
                   color: statusColor.withOpacity(0.1),
                   borderRadius: BorderRadius.circular(12),
@@ -1064,7 +1159,7 @@ class _FacultyDashboardState extends State<FacultyDashboard>
                   status.toUpperCase(),
                   style: TextStyle(
                     color: statusColor,
-                    fontSize: 12,
+                    fontSize: screenWidth * 0.035,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
@@ -1076,7 +1171,7 @@ class _FacultyDashboardState extends State<FacultyDashboard>
             '${request.date.day}/${request.date.month}/${request.date.year}',
             style: TextStyle(
               color: textColor,
-              fontSize: 12,
+              fontSize: screenWidth * 0.03,
             ),
           ),
           SizedBox(height: 8),
@@ -1086,7 +1181,7 @@ class _FacultyDashboardState extends State<FacultyDashboard>
                   '${entry.key} - ${entry.value}',
                   style: TextStyle(
                     color: textColor,
-                    fontSize: 12,
+                    fontSize: screenWidth * 0.03,
                   ),
                 ),
               )),
@@ -1094,8 +1189,8 @@ class _FacultyDashboardState extends State<FacultyDashboard>
             mainAxisAlignment: MainAxisAlignment.end,
             children: [
               IconButton(
-                icon:
-                    Icon(Icons.refresh_outlined, size: 20, color: accentColor),
+                icon: Icon(Icons.refresh_outlined,
+                    size: screenWidth * 0.04, color: accentColor),
                 onPressed: () {
                   showDialog(
                     context: context,
@@ -1199,17 +1294,49 @@ class _FacultyDashboardState extends State<FacultyDashboard>
     final dayName = _getDayName(today.weekday);
     final todaySchedule = classSchedule[dayName] ?? {};
 
+    // Combine consecutive periods of same class
+    List<Map<String, dynamic>> combinedSchedule = [];
+    MapEntry<int, String>? lastEntry;
+
+    todaySchedule.entries.forEach((entry) {
+      if (lastEntry != null &&
+          lastEntry!.value == entry.value &&
+          lastEntry!.key + 1 == entry.key) {
+        // Update the last entry's end period
+        combinedSchedule.last['endPeriod'] = entry.key;
+      } else {
+        // Add new entry
+        combinedSchedule.add({
+          'startPeriod': entry.key,
+          'endPeriod': entry.key,
+          'className': entry.value,
+        });
+      }
+      lastEntry = entry;
+    });
+
     if (todaySchedule.isEmpty) {
       return Container(
-        padding: const EdgeInsets.all(12),
+        padding: EdgeInsets.all(screenWidth * 0.04),
         decoration: BoxDecoration(
-          color: accentColor.withOpacity(0.1),
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: accentColor.withOpacity(0.3)),
+          color: cardColor,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: accentColor.withOpacity(0.2)),
         ),
-        child: const Text(
-          'No classes scheduled for today',
-          style: TextStyle(color: textColor),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.event_busy,
+                color: accentColor.withOpacity(0.7), size: screenWidth * 0.08),
+            SizedBox(height: screenHeight * 0.01),
+            Text(
+              'No classes scheduled for today',
+              style: TextStyle(
+                color: textColor,
+                fontSize: screenWidth * 0.04,
+              ),
+            ),
+          ],
         ),
       );
     }
@@ -1217,104 +1344,232 @@ class _FacultyDashboardState extends State<FacultyDashboard>
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Row(
-          children: [
-            Icon(Icons.schedule, color: accentColor, size: 16),
-            const SizedBox(width: 8),
-            Text(
-              "Today's Schedule ($dayName)",
-              style: const TextStyle(
-                color: textColor,
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 12),
+        // Day header with class count
         Container(
-          decoration: BoxDecoration(
-            color: backgroundColor,
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: accentColor.withOpacity(0.3)),
+          width: screenWidth * 0.9,
+          padding: EdgeInsets.symmetric(
+            horizontal: screenWidth * 0.04,
+            vertical: screenHeight * 0.01,
           ),
-          child: ListView.builder(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            itemCount: todaySchedule.length,
-            itemBuilder: (context, index) {
-              final entry = todaySchedule.entries.elementAt(index);
-              return Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  border: index != todaySchedule.length - 1
-                      ? Border(
-                          bottom: BorderSide(
-                            color: accentColor.withOpacity(0.1),
-                          ),
-                        )
-                      : null,
+          decoration: BoxDecoration(
+            color: cardColor,
+            borderRadius: BorderRadius.only(
+              topLeft: Radius.circular(12),
+              topRight: Radius.circular(12),
+            ),
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Row(
+                children: [
+                  Icon(Icons.calendar_today,
+                      color: accentColor, size: screenWidth * 0.05),
+                  SizedBox(width: screenWidth * 0.02),
+                  Text(
+                    dayName,
+                    style: TextStyle(
+                      color: textColor,
+                      fontSize: screenWidth * 0.045,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ],
+              ),
+              Container(
+                padding: EdgeInsets.symmetric(
+                  horizontal: screenWidth * 0.03,
+                  vertical: screenHeight * 0.005,
                 ),
+                decoration: BoxDecoration(
+                  color: accentColor.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Text(
+                  '${todaySchedule.length} Classes',
+                  style: TextStyle(
+                    color: accentColor,
+                    fontSize: screenWidth * 0.035,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+        // Add box container for timeline
+        Container(
+          width: screenWidth * 0.9,
+          padding: EdgeInsets.all(screenWidth * 0.03),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.only(
+              bottomLeft: Radius.circular(12),
+              bottomRight: Radius.circular(12),
+            ),
+            border: Border(
+              left: BorderSide(color: Colors.grey.withOpacity(0.2)),
+              right: BorderSide(color: Colors.grey.withOpacity(0.2)),
+              bottom: BorderSide(color: Colors.grey.withOpacity(0.2)),
+            ),
+          ),
+          child: Column(
+            children: combinedSchedule.map((schedule) {
+              final startPeriod = schedule['startPeriod'] as int;
+              final endPeriod = schedule['endPeriod'] as int;
+              final className = schedule['className'] as String;
+              final isLab = className.contains('Lab');
+              final isCurrentPeriod = _isCurrentPeriod(startPeriod);
+
+              return Container(
+                width: double.infinity,
+                height: screenHeight * 0.035,
+                margin: EdgeInsets.only(bottom: screenHeight * 0.005),
                 child: Row(
                   children: [
+                    // Timeline dot and line
                     Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 8,
-                        vertical: 4,
-                      ),
-                      decoration: BoxDecoration(
-                        color: accentColor.withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Text(
-                        timeSlots[entry.key],
-                        style: TextStyle(
-                          color: accentColor,
-                          fontSize: 12,
-                          fontWeight: FontWeight.bold,
-                        ),
+                      width: screenWidth * 0.1,
+                      child: Column(
+                        children: [
+                          Container(
+                            width: screenWidth * 0.015,
+                            height: screenWidth * 0.015,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: isCurrentPeriod
+                                  ? accentColor
+                                  : _isPeriodCompleted(startPeriod)
+                                      ? Colors.green
+                                      : backgroundColor,
+                              border: Border.all(
+                                color: _isPeriodCompleted(startPeriod)
+                                    ? Colors.green
+                                    : accentColor,
+                                width: 2,
+                              ),
+                            ),
+                          ),
+                          Expanded(
+                            child: Container(
+                              width: 2,
+                              color: _isPeriodCompleted(startPeriod)
+                                  ? Colors.green.withOpacity(0.7)
+                                  : accentColor.withOpacity(0.4),
+                            ),
+                          ),
+                        ],
                       ),
                     ),
-                    const SizedBox(width: 12),
+                    // Period content
                     Expanded(
-                      child: Text(
-                        entry.value,
-                        style: const TextStyle(
-                          color: textColor,
-                          fontSize: 14,
+                      child: Container(
+                        padding: EdgeInsets.symmetric(
+                          horizontal: screenWidth * 0.03,
                         ),
-                      ),
-                    ),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 8,
-                        vertical: 4,
-                      ),
-                      decoration: BoxDecoration(
-                        color: entry.value.contains('Lab')
-                            ? Colors.purple.withOpacity(0.1)
-                            : Colors.blue.withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Text(
-                        entry.value.contains('Lab') ? 'Lab' : 'Theory',
-                        style: TextStyle(
-                          color: entry.value.contains('Lab')
-                              ? Colors.purple
-                              : Colors.blue,
-                          fontSize: 12,
-                          fontWeight: FontWeight.bold,
+                        child: Row(
+                          children: [
+                            Container(
+                              width: screenWidth * 0.25,
+                              child: Text(
+                                startPeriod == endPeriod
+                                    ? timeSlots[startPeriod]
+                                    : '${timeSlots[startPeriod].split(' - ')[0]} - ${timeSlots[endPeriod].split(' - ')[1]}',
+                                style: TextStyle(
+                                  color:
+                                      isCurrentPeriod ? accentColor : textColor,
+                                  fontSize: screenWidth * 0.03,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ),
+                            SizedBox(width: screenWidth * 0.02),
+                            Expanded(
+                              child: Row(
+                                children: [
+                                  Expanded(
+                                    child: Text(
+                                      className.replaceAll(' (Lab)', ''),
+                                      style: TextStyle(
+                                        color: isCurrentPeriod
+                                            ? accentColor
+                                            : textColor,
+                                        fontSize: screenWidth * 0.035,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ),
+                                  if (isLab)
+                                    Container(
+                                      margin: EdgeInsets.only(
+                                          left: screenWidth * 0.02),
+                                      padding: EdgeInsets.symmetric(
+                                        horizontal: screenWidth * 0.02,
+                                        vertical: screenHeight * 0.002,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        color: className.contains('BCA')
+                                            ? Colors.blue.withOpacity(0.2)
+                                            : Colors.purple.withOpacity(0.2),
+                                        borderRadius: BorderRadius.circular(8),
+                                      ),
+                                      child: Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          Icon(
+                                              className.contains('BCA')
+                                                  ? Icons.laptop_mac
+                                                  : Icons.science,
+                                              color: className.contains('BCA')
+                                                  ? Colors.blue
+                                                  : Colors.purple,
+                                              size: screenWidth * 0.03),
+                                          SizedBox(width: screenWidth * 0.01),
+                                          Text(
+                                            'LAB',
+                                            style: TextStyle(
+                                              color: className.contains('BCA')
+                                                  ? Colors.blue
+                                                  : Colors.purple,
+                                              fontSize: screenWidth * 0.025,
+                                              fontWeight: FontWeight.bold,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                ],
+                              ),
+                            ),
+                          ],
                         ),
                       ),
                     ),
                   ],
                 ),
               );
-            },
+            }).toList(),
           ),
         ),
       ],
     );
+  }
+
+  // Add these helper methods
+  bool _isCurrentPeriod(int periodIndex) {
+    final now = DateTime.now();
+    final currentTime = now.hour * 60 + now.minute;
+
+    final periodTime = timeSlots[periodIndex].split(' - ')[0].split(':');
+    final periodStart =
+        int.parse(periodTime[0]) * 60 + int.parse(periodTime[1]);
+
+    final nextPeriodTime = timeSlots[periodIndex].split(' - ')[1].split(':');
+    final periodEnd =
+        int.parse(nextPeriodTime[0]) * 60 + int.parse(nextPeriodTime[1]);
+
+    return currentTime >= periodStart && currentTime <= periodEnd;
   }
 
   String _getDayName(int weekday) {
@@ -1329,356 +1584,21 @@ class _FacultyDashboardState extends State<FacultyDashboard>
         return 'Thursday';
       case 5:
         return 'Friday';
+      case 6:
+        return 'Saturday';
       default:
         return '';
     }
   }
 
-  void _showFacultyDetails(BuildContext context) {
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: Colors.transparent,
-      isScrollControlled: true,
-      builder: (context) => Container(
-        height: MediaQuery.of(context).size.height * 0.9,
-        decoration: BoxDecoration(
-          color: backgroundColor,
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
-        ),
-        child: Column(
-          children: [
-            // Handle bar
-            Container(
-              margin: const EdgeInsets.symmetric(vertical: 10),
-              height: 4,
-              width: 40,
-              decoration: BoxDecoration(
-                color: textColor.withOpacity(0.3),
-                borderRadius: BorderRadius.circular(2),
-              ),
-            ),
-            Expanded(
-              child: DefaultTabController(
-                length: 2,
-                child: Column(
-                  children: [
-                    TabBar(
-                      tabs: const [
-                        Tab(text: 'Details'),
-                        Tab(text: 'Weekly Schedule'),
-                      ],
-                      labelColor: accentColor,
-                      unselectedLabelColor: textColor,
-                      indicatorColor: accentColor,
-                    ),
-                    Expanded(
-                      child: TabBarView(
-                        children: [
-                          _buildFacultyDetailsTab(),
-                          _buildWeeklyScheduleTab(),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
+  bool _isPeriodCompleted(int periodIndex) {
+    final now = DateTime.now();
+    final currentTime = now.hour * 60 + now.minute;
 
-  Widget _buildFacultyDetailsTab() {
-    return ListView(
-      padding: const EdgeInsets.all(16),
-      children: [
-        _buildProfileHeader(),
-        const SizedBox(height: 16),
-        _buildDetailCard(
-          title: 'Contact Information',
-          icon: Icons.contact_mail,
-          children: [
-            _buildDetailRow('Email', facultyProfile['email']),
-            _buildDetailRow('Phone', facultyProfile['phone']),
-          ],
-        ),
-        const SizedBox(height: 16),
-        _buildDetailCard(
-          title: 'Academic Profile',
-          icon: Icons.school,
-          children: [
-            _buildDetailRow('Qualification', facultyProfile['qualification']),
-            _buildDetailRow('Experience', facultyProfile['experience']),
-            _buildDetailRow('Date of Birth', facultyProfile['dob']),
-          ],
-        ),
-        const SizedBox(height: 16),
-        _buildDetailCard(
-          title: "Today's Schedule",
-          icon: Icons.schedule,
-          children: [
-            _buildTodaySchedule(),
-          ],
-        ),
-      ],
-    );
-  }
+    final nextPeriodTime = timeSlots[periodIndex].split(' - ')[1].split(':');
+    final periodEnd =
+        int.parse(nextPeriodTime[0]) * 60 + int.parse(nextPeriodTime[1]);
 
-  Widget _buildWeeklyScheduleTab() {
-    return DefaultTabController(
-      length: 5, // For Monday to Friday
-      child: Column(
-        children: [
-          TabBar(
-            isScrollable: true,
-            tabs: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday']
-                .map((day) {
-              return Tab(
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  child: Text(
-                    day,
-                    style: const TextStyle(fontSize: 14),
-                  ),
-                ),
-              );
-            }).toList(),
-            labelColor: accentColor,
-            unselectedLabelColor: textColor.withOpacity(0.5),
-            indicatorColor: accentColor,
-          ),
-          Expanded(
-            child: TabBarView(
-              children: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday']
-                  .map((day) {
-                final daySchedule = classSchedule[day] ?? {};
-                return ListView.builder(
-                  padding: const EdgeInsets.all(16),
-                  itemCount: daySchedule.length,
-                  itemBuilder: (context, index) {
-                    final period = daySchedule.entries.elementAt(index);
-                    final isLab = period.value.contains('Lab');
-                    return Container(
-                      margin: const EdgeInsets.only(bottom: 16),
-                      decoration: BoxDecoration(
-                        color: cardColor,
-                        borderRadius: BorderRadius.circular(16),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withOpacity(0.1),
-                            blurRadius: 4,
-                            offset: const Offset(0, 2),
-                          ),
-                        ],
-                      ),
-                      child: Stack(
-                        children: [
-                          if (isLab)
-                            Positioned(
-                              right: 0,
-                              top: 0,
-                              child: Container(
-                                padding: const EdgeInsets.all(8),
-                                decoration: BoxDecoration(
-                                  color: Colors.purple.withOpacity(0.1),
-                                  borderRadius: const BorderRadius.only(
-                                    topRight: Radius.circular(16),
-                                    bottomLeft: Radius.circular(16),
-                                  ),
-                                ),
-                                child: const Text(
-                                  'LAB',
-                                  style: TextStyle(
-                                    color: Colors.purple,
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 12,
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ListTile(
-                            contentPadding: const EdgeInsets.all(16),
-                            leading: Container(
-                              width: 80,
-                              padding: const EdgeInsets.all(8),
-                              decoration: BoxDecoration(
-                                color: accentColor.withOpacity(0.1),
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              child: Text(
-                                timeSlots[period.key],
-                                textAlign: TextAlign.center,
-                                style: TextStyle(
-                                  color: accentColor,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                            ),
-                            title: Text(
-                              period.value.replaceAll(' (Lab)', ''),
-                              style: const TextStyle(
-                                color: textColor,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                            subtitle: Row(
-                              children: [
-                                Icon(
-                                  isLab ? Icons.computer : Icons.class_,
-                                  color: textColor.withOpacity(0.7),
-                                  size: 16,
-                                ),
-                                const SizedBox(width: 8),
-                                Text(
-                                  isLab ? 'Laboratory' : 'Theory Class',
-                                  style: TextStyle(
-                                    color: textColor.withOpacity(0.7),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
-                    );
-                  },
-                );
-              }).toList(),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildProfileHeader() {
-    return Container(
-      padding: const EdgeInsets.all(24),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            accentColor.withOpacity(0.8),
-            accentColor,
-          ],
-        ),
-        borderRadius: BorderRadius.circular(16),
-      ),
-      child: Column(
-        children: [
-          const CircleAvatar(
-            radius: 50,
-            backgroundColor: Colors.white,
-            child: Icon(
-              Icons.person,
-              size: 50,
-              color: accentColor,
-            ),
-          ),
-          const SizedBox(height: 16),
-          Text(
-            facultyProfile['name'],
-            style: const TextStyle(
-              color: Colors.white,
-              fontSize: 24,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            facultyProfile['designation'],
-            style: TextStyle(
-              color: Colors.white.withOpacity(0.9),
-              fontSize: 16,
-            ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            facultyProfile['department'],
-            style: TextStyle(
-              color: Colors.white.withOpacity(0.8),
-              fontSize: 14,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildDetailCard({
-    required String title,
-    required IconData icon,
-    required List<Widget> children,
-  }) {
-    return Container(
-      decoration: BoxDecoration(
-        color: cardColor,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: accentColor.withOpacity(0.2)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Padding(
-            padding: const EdgeInsets.all(16),
-            child: Row(
-              children: [
-                Icon(icon, color: accentColor),
-                const SizedBox(width: 8),
-                Text(
-                  title,
-                  style: const TextStyle(
-                    color: textColor,
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const Divider(color: accentColor, height: 1),
-          Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: children,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildDetailRow(String label, String value) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 8),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          SizedBox(
-            width: 120,
-            child: Text(
-              label,
-              style: TextStyle(
-                color: textColor.withOpacity(0.7),
-                fontSize: 14,
-              ),
-            ),
-          ),
-          Expanded(
-            child: Text(
-              value,
-              style: const TextStyle(
-                color: textColor,
-                fontSize: 14,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
+    return currentTime > periodEnd;
   }
 }
