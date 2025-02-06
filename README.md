@@ -1,4 +1,4 @@
-# College Management System
+# faculty-Timetable-Management
 
 A comprehensive Flutter-based College Management System designed to streamline administrative tasks, faculty management, and timetable scheduling in educational institutions.
 
@@ -110,8 +110,8 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 
 ## Contact
 
-Your Name - your.email@example.com
-Project Link: https://github.com/yourusername/college-management-system
+Your Name - nraoswasthik2004@gmail.com
+Project Link: https://github.com/swasthiknrao/faculty-Timetable-Management
 
 ## Acknowledgments
 
