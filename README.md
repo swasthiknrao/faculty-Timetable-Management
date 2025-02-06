@@ -72,19 +72,19 @@ permission_handler: ^10.0.0
 ## Project Structure
 ib/faculty/faculty_profile_page.dart
 lib/
-├── admin/
-│ ├── faculty_management.dart
-│ ├── timetable_management.dart
-│ └── settings_page.dart
-├── faculty/
-│ ├── dashboard.dart
-│ └── settings_page.dart
-├── models/
-│ └── timetable_entry.dart
-├── utils/
-│ ├── theme_provider.dart
-│ └── responsive_util.dart
-└── main.dart
+├── admin/                                                                   
+│ ├── faculty_management.dart                                             
+│ ├── timetable_management.dart                                                      
+│ └── settings_page.dart                                                     
+├── faculty/                                                        
+│ ├── dashboard.dart                                                                  
+│ └── settings_page.dart                                                                       
+├── models/                                                         
+│ └── timetable_entry.dart                                                        
+├── utils/                                                                    
+│ ├── theme_provider.dart                                                               
+│ └── responsive_util.dart                                                                  
+└── main.dart                                                           
 
 
 
