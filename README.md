@@ -70,8 +70,8 @@ permission_handler: ^10.0.0
 
 
 ## Project Structure
-ib/faculty/faculty_profile_page.dart
-lib/
+ib/faculty/faculty_profile_page.dart                                                                         
+lib/                                                                     
 ├── admin/                                                                   
 │ ├── faculty_management.dart                                             
 │ ├── timetable_management.dart                                                      
