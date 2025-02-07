@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'admin_dashboard.dart';
 import 'faculty_dashboard.dart';
 import 'forgot_password_screen.dart'; // Add your forgot password screen import
-import 'package:flutter/services.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -26,12 +25,6 @@ class _LoginPageState extends State<LoginPage>
   @override
   void initState() {
     super.initState();
-    // Set preferred orientations to portrait only
-    SystemChrome.setPreferredOrientations([
-      DeviceOrientation.portraitUp,
-      DeviceOrientation.portraitDown,
-    ]);
-
     _controller = AnimationController(
       vsync: this,
       duration: const Duration(seconds: 1),

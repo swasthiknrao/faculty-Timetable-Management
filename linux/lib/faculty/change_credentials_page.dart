@@ -73,6 +73,7 @@ class _ChangeCredentialsPageState extends State<ChangeCredentialsPage>
 
     return Scaffold(
       backgroundColor: backgroundColor,
+   
       body: Stack(
         children: [
           // Animated background patterns

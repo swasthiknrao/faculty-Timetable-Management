@@ -6,7 +6,6 @@ import 'admin/class_selection.dart';
 import 'admin/timetable_viewer.dart';
 import 'admin/settings_page.dart';
 import 'admin/faculty_catalog.dart';
-import 'package:flutter/services.dart';
 
 class AdminDashboard extends StatefulWidget {
   const AdminDashboard({super.key});
@@ -16,6 +15,7 @@ class AdminDashboard extends StatefulWidget {
 }
 
 class _AdminDashboardState extends State<AdminDashboard> {
+  // Define the color scheme
   static const backgroundColor = Color.fromRGBO(24, 29, 32, 1);
   static const textColor = Color.fromRGBO(159, 160, 162, 1);
   static const accentColor = Color.fromRGBO(153, 55, 30, 1);
@@ -42,12 +42,18 @@ class _AdminDashboardState extends State<AdminDashboard> {
               'subject': 'Mathematics',
               'faculty': ['Alice Johnson']
             }
+            // ... other periods
           }
+          // ... other days
         }
+        // ... other sections
       }
+      // ... other years
     }
+    // ... other courses
   };
 
+  // Add this sample faculty data structure
   final List<Map<String, dynamic>> facultyData = [
     {
       'name': 'Dr. Rajesh Kumar',
@@ -191,6 +197,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
     }
   ];
 
+  // Update this field to match faculty_management.dart departments
   final List<String> departments = [
     'Computer Applications Dept.',
     'Business Administration Dept.',
@@ -198,15 +205,6 @@ class _AdminDashboardState extends State<AdminDashboard> {
     'Science Dept.',
     'Language Dept.',
   ];
-
-  @override
-  void initState() {
-    super.initState();
-    SystemChrome.setPreferredOrientations([
-      DeviceOrientation.portraitUp,
-      DeviceOrientation.portraitDown,
-    ]);
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -220,7 +218,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
   PreferredSizeWidget _buildAppBar(BuildContext context) {
     return AppBar(
       automaticallyImplyLeading: false,
-      title: Text(
+      title: const Text(
         'Admin Dashboard',
         style: TextStyle(
           color: textColor,
@@ -235,7 +233,9 @@ class _AdminDashboardState extends State<AdminDashboard> {
           icon: const Icon(Icons.settings, color: accentColor),
           onPressed: () => Navigator.push(
             context,
-            MaterialPageRoute(builder: (context) => const SettingsPage()),
+            MaterialPageRoute(
+              builder: (context) => const SettingsPage(),
+            ),
           ),
         ),
         IconButton(
@@ -250,170 +250,142 @@ class _AdminDashboardState extends State<AdminDashboard> {
   }
 
   Widget _buildDashboard() {
-    final mediaQuery = MediaQuery.of(context);
-    final screenHeight = mediaQuery.size.height;
-    final screenWidth = mediaQuery.size.width;
-
     return SafeArea(
-      child: LayoutBuilder(
-        builder: (context, constraints) {
-          return SingleChildScrollView(
-            physics: const BouncingScrollPhysics(),
-            child: ConstrainedBox(
-              constraints: BoxConstraints(
-                minHeight: constraints.maxHeight,
-                minWidth: constraints.maxWidth,
-              ),
-              child: Padding(
-                padding: EdgeInsets.symmetric(
-                  horizontal: screenWidth * 0.04,
-                  vertical: screenHeight * 0.02,
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      'Admin Dashboard',
-                      style: TextStyle(
-                        color: textColor,
-                        fontSize: screenHeight * 0.035,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    SizedBox(height: screenHeight * 0.01),
-                    Text(
-                      'Manage your institution',
-                      style: TextStyle(
-                        color: textColor.withOpacity(0.7),
-                        fontSize: screenHeight * 0.02,
-                      ),
-                    ),
-                    SizedBox(height: screenHeight * 0.03),
-                    _buildManagementSection(),
-                    SizedBox(height: screenHeight * 0.03),
-                    _buildQuickStats(),
-                  ],
+      child: SingleChildScrollView(
+        physics: const BouncingScrollPhysics(),
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'Admin Dashboard',
+                style: TextStyle(
+                  color: textColor,
+                  fontSize: 28,
+                  fontWeight: FontWeight.bold,
                 ),
               ),
-            ),
-          );
-        },
+              const SizedBox(height: 8),
+              Text(
+                'Manage your institution',
+                style: TextStyle(
+                  color: textColor.withOpacity(0.7),
+                  fontSize: 16,
+                ),
+              ),
+              const SizedBox(height: 24),
+              _buildManagementSection(),
+              const SizedBox(height: 24),
+              _buildQuickStats(),
+            ],
+          ),
+        ),
       ),
     );
   }
 
   Widget _buildManagementSection() {
-    final mediaQuery = MediaQuery.of(context);
-    final screenWidth = mediaQuery.size.width;
-    final screenHeight = mediaQuery.size.height;
-
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
-      mainAxisSize: MainAxisSize.min,
       children: [
-        Text(
+        const Text(
           'Management',
           style: TextStyle(
             color: textColor,
-            fontSize: screenHeight * 0.025,
+            fontSize: 20,
             fontWeight: FontWeight.bold,
           ),
         ),
-        SizedBox(height: screenHeight * 0.02),
-        GridView.builder(
+        const SizedBox(height: 16),
+        GridView.count(
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
-          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: 2,
-            crossAxisSpacing: screenWidth * 0.04,
-            mainAxisSpacing: screenWidth * 0.04,
-            childAspectRatio: 1.0,
-          ),
-          itemCount: 4,
-          itemBuilder: (context, index) {
-            final menuItems = [
-              {
-                'icon': Icons.group_add_rounded,
-                'title': 'Faculty',
-                'subtitle': 'Manage faculty members',
-                'onTap': () => Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                          builder: (context) => const FacultyManagement()),
-                    ),
-              },
-              {
-                'icon': Icons.calendar_month_outlined,
-                'title': 'Timetable',
-                'subtitle': 'Manage class schedules',
-                'onTap': () => Navigator.push(
-                      context,
-                      SlidePageRoute(
-                          page: const ClassSelection(),
-                          direction: AxisDirection.left),
-                    ),
-              },
-              {
-                'icon': Icons.event_note_rounded,
-                'title': 'View Schedule',
-                'subtitle': 'Check timetables',
-                'onTap': () => Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => TimetableViewer(
-                            timetableData: timetableManagementData),
-                      ),
-                    ),
-              },
-              {
-                'icon': Icons.library_books_rounded,
-                'title': 'Faculty Catalog',
-                'subtitle': 'View faculty by department',
-                'onTap': () => Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => FacultyCatalog(
-                          facultyData: facultyData,
-                          departments: departments,
-                        ),
-                      ),
-                    ),
-              }
-            ];
-
-            final item = menuItems[index];
-            return _buildMenuCard(
+          crossAxisCount: 2,
+          crossAxisSpacing: 16,
+          mainAxisSpacing: 16,
+          children: [
+            _buildMenuCard(
               context: context,
-              icon: item['icon'] as IconData,
-              title: item['title'] as String,
-              subtitle: item['subtitle'] as String,
-              onTap: item['onTap'] as VoidCallback,
-            );
-          },
+              icon: Icons.people,
+              title: 'Faculty',
+              subtitle: 'Manage faculty members',
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const FacultyManagement(),
+                  ),
+                );
+              },
+            ),
+            _buildMenuCard(
+              context: context,
+              icon: Icons.calendar_today,
+              title: 'Timetable',
+              subtitle: 'Manage class schedules',
+              onTap: () {
+                Navigator.push(
+                  context,
+                  SlidePageRoute(
+                    page: const ClassSelection(),
+                    direction: AxisDirection.left,
+                  ),
+                );
+              },
+            ),
+            _buildMenuCard(
+              context: context,
+              icon: Icons.schedule,
+              title: 'View Schedule',
+              subtitle: 'Check timetables',
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => TimetableViewer(
+                      timetableData: timetableManagementData,
+                    ),
+                  ),
+                );
+              },
+            ),
+            _buildMenuCard(
+              context: context,
+              icon: Icons.menu_book,
+              title: 'Faculty Catalog',
+              subtitle: 'View faculty by department',
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => FacultyCatalog(
+                      facultyData: facultyData,
+                      departments: departments,
+                    ),
+                  ),
+                );
+              },
+            ),
+          ],
         ),
       ],
     );
   }
 
   Widget _buildQuickStats() {
-    final mediaQuery = MediaQuery.of(context);
-    final screenHeight = mediaQuery.size.height;
-    final screenWidth = mediaQuery.size.width;
-
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
-      mainAxisSize: MainAxisSize.min,
       children: [
-        Text(
+        const Text(
           'Quick Stats',
           style: TextStyle(
             color: textColor,
-            fontSize: screenHeight * 0.025,
+            fontSize: 20,
             fontWeight: FontWeight.bold,
           ),
         ),
-        SizedBox(height: screenHeight * 0.02),
+        const SizedBox(height: 16),
         Row(
           children: [
             Expanded(
@@ -423,7 +395,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
                 value: '${facultyData.length}',
               ),
             ),
-            SizedBox(width: screenWidth * 0.04),
+            const SizedBox(width: 16),
             Expanded(
               child: _buildStatCard(
                 icon: Icons.category_outlined,
@@ -444,68 +416,48 @@ class _AdminDashboardState extends State<AdminDashboard> {
     required String subtitle,
     required VoidCallback onTap,
   }) {
-    final mediaQuery = MediaQuery.of(context);
-    final screenHeight = mediaQuery.size.height;
-    final screenWidth = mediaQuery.size.width;
-
     return Card(
       elevation: 4,
       color: cardColor,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(screenWidth * 0.04),
+        borderRadius: BorderRadius.circular(16),
         side: BorderSide(color: accentColor.withOpacity(0.2)),
       ),
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(screenWidth * 0.04),
+        borderRadius: BorderRadius.circular(16),
         child: Padding(
-          padding: EdgeInsets.all(screenWidth * 0.03),
-          child: LayoutBuilder(
-            builder: (context, constraints) {
-              return Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  Container(
-                    padding: EdgeInsets.all(screenWidth * 0.03),
-                    decoration: BoxDecoration(
-                      color: accentColor.withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(screenWidth * 0.03),
-                    ),
-                    child: Icon(icon,
-                        size: screenWidth * 0.07, color: accentColor),
-                  ),
-                  SizedBox(height: screenHeight * 0.01),
-                  FittedBox(
-                    fit: BoxFit.scaleDown,
-                    child: Text(
-                      title,
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        color: textColor,
-                        fontSize: screenHeight * 0.018,
-                        fontWeight: FontWeight.bold,
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-                  SizedBox(height: screenHeight * 0.005),
-                  Flexible(
-                    child: Text(
-                      subtitle,
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        color: textColor.withOpacity(0.7),
-                        fontSize: screenHeight * 0.014,
-                      ),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-                ],
-              );
-            },
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: accentColor.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Icon(icon, size: 32, color: accentColor),
+              ),
+              const SizedBox(height: 16),
+              Text(
+                title,
+                style: const TextStyle(
+                  color: textColor,
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                subtitle,
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  color: textColor.withOpacity(0.7),
+                  fontSize: 12,
+                ),
+              ),
+            ],
           ),
         ),
       ),
@@ -517,50 +469,45 @@ class _AdminDashboardState extends State<AdminDashboard> {
     required String title,
     required String value,
   }) {
-    final mediaQuery = MediaQuery.of(context);
-    final screenHeight = mediaQuery.size.height;
-    final screenWidth = mediaQuery.size.width;
-
     return Card(
       elevation: 4,
       color: cardColor,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(screenWidth * 0.04),
+        borderRadius: BorderRadius.circular(16),
         side: BorderSide(color: accentColor.withOpacity(0.2)),
       ),
       child: Padding(
-        padding: EdgeInsets.all(screenWidth * 0.04),
+        padding: const EdgeInsets.all(16),
         child: Column(
           children: [
             Row(
               children: [
                 Container(
-                  padding: EdgeInsets.all(screenWidth * 0.02),
+                  padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
                     color: accentColor.withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(screenWidth * 0.02),
+                    borderRadius: BorderRadius.circular(8),
                   ),
-                  child:
-                      Icon(icon, size: screenWidth * 0.06, color: accentColor),
+                  child: Icon(icon, size: 24, color: accentColor),
                 ),
-                SizedBox(width: screenWidth * 0.03),
+                const SizedBox(width: 12),
                 Expanded(
                   child: Text(
                     title,
                     style: TextStyle(
                       color: textColor.withOpacity(0.7),
-                      fontSize: screenHeight * 0.018,
+                      fontSize: 14,
                     ),
                   ),
                 ),
               ],
             ),
-            SizedBox(height: screenHeight * 0.015),
+            const SizedBox(height: 12),
             Text(
               value,
-              style: TextStyle(
+              style: const TextStyle(
                 color: textColor,
-                fontSize: screenHeight * 0.03,
+                fontSize: 24,
                 fontWeight: FontWeight.bold,
               ),
             ),

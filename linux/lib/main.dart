@@ -4,7 +4,6 @@ import 'login_page.dart';
 import 'theme_provider.dart';
 import 'utils/responsive_util.dart';
 import 'utils/lab_hours_provider.dart';
-import 'package:flutter/services.dart';
 
 void main() {
   final themeProvider = ThemeProvider();
@@ -34,11 +33,6 @@ class MyApp extends StatelessWidget {
           home: Builder(
             builder: (context) {
               ResponsiveUtil().init(context);
-              // Set preferred orientations to portrait only
-              SystemChrome.setPreferredOrientations([
-                DeviceOrientation.portraitUp,
-                DeviceOrientation.portraitDown,
-              ]);
               return const LoginPage();
             },
           ),

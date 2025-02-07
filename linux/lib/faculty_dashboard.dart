@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'pages/unavailability_page.dart';
 import 'faculty/settings_page.dart';
 import 'faculty/faculty_profile_page.dart';
@@ -224,11 +223,6 @@ class _FacultyDashboardState extends State<FacultyDashboard>
   @override
   void initState() {
     super.initState();
-    // Force portrait mode
-    SystemChrome.setPreferredOrientations([
-      DeviceOrientation.portraitUp,
-      DeviceOrientation.portraitDown,
-    ]);
     _tabController = TabController(length: 2, vsync: this);
     // Initialize with default values
     // TODO: Fetch these values from Firebase/database
@@ -243,13 +237,6 @@ class _FacultyDashboardState extends State<FacultyDashboard>
 
   @override
   void dispose() {
-    // Reset orientation settings when widget is disposed
-    SystemChrome.setPreferredOrientations([
-      DeviceOrientation.portraitUp,
-      DeviceOrientation.portraitDown,
-      DeviceOrientation.landscapeLeft,
-      DeviceOrientation.landscapeRight,
-    ]);
     _tabController.dispose();
     super.dispose();
   }
@@ -351,8 +338,7 @@ class _FacultyDashboardState extends State<FacultyDashboard>
           IconButton(
             icon: Stack(
               children: [
-                Icon(Icons.notifications_outlined,
-                    size: screenWidth * 0.06, color: textColor),
+                Icon(Icons.notifications_outlined, color: textColor),
                 if (requestStatus.entries
                             .where((e) => e.value == 'accepted')
                             .length +
@@ -386,8 +372,7 @@ class _FacultyDashboardState extends State<FacultyDashboard>
             onPressed: _showNotificationHistory,
           ),
           IconButton(
-            icon: Icon(Icons.settings_outlined,
-                size: screenWidth * 0.06, color: textColor),
+            icon: Icon(Icons.settings_outlined, color: textColor),
             onPressed: () async {
               try {
                 final result = await Navigator.push(
@@ -451,7 +436,7 @@ class _FacultyDashboardState extends State<FacultyDashboard>
       body: SafeArea(
         child: Column(
           children: [
-            SizedBox(height: screenHeight * 0.02),
+            SizedBox(height: screenHeight * 0.02), // Add top padding
             _buildTodaySchedule(),
             Expanded(
               child: ListView(
@@ -782,7 +767,6 @@ class _FacultyDashboardState extends State<FacultyDashboard>
                       fontWeight: FontWeight.bold,
                     ),
                   ),
-                  SizedBox(height: MediaQuery.of(context).size.height * 0.015),
                   Wrap(
                     spacing: MediaQuery.of(context).size.width * 0.02,
                     runSpacing: MediaQuery.of(context).size.width * 0.02,
@@ -1356,8 +1340,8 @@ class _FacultyDashboardState extends State<FacultyDashboard>
       );
     }
 
-    return InkWell(
-      onTap: _showFullWeekTimetable,
+    return GestureDetector(
+      onTap: () => _showWeeklySchedule(),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -1495,7 +1479,7 @@ class _FacultyDashboardState extends State<FacultyDashboard>
                                     color: isCurrentPeriod
                                         ? accentColor
                                         : textColor,
-                                    fontSize: screenWidth * 0.035,
+                                    fontSize: screenWidth * 0.03,
                                     fontWeight: FontWeight.bold,
                                   ),
                                 ),
@@ -1576,276 +1560,6 @@ class _FacultyDashboardState extends State<FacultyDashboard>
     );
   }
 
-  // Add this new method to show full week timetable
-  void _showFullWeekTimetable() {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (context) => DraggableScrollableSheet(
-        initialChildSize: 0.9,
-        maxChildSize: 0.95,
-        minChildSize: 0.6,
-        builder: (_, controller) => Container(
-          decoration: BoxDecoration(
-            color: backgroundColor,
-            borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-          ),
-          child: Column(
-            children: [
-              // Handle bar
-              Container(
-                margin: const EdgeInsets.symmetric(vertical: 10),
-                height: 4,
-                width: 40,
-                decoration: BoxDecoration(
-                  color: textColor.withOpacity(0.3),
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
-              // Header
-              Container(
-                padding: const EdgeInsets.all(20),
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [accentColor.withOpacity(0.8), accentColor],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
-                ),
-                child: Row(
-                  children: [
-                    Icon(Icons.calendar_month, color: Colors.white),
-                    SizedBox(width: screenWidth * 0.02),
-                    Text(
-                      'Weekly Timetable',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: screenWidth * 0.04,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              // Week Timetable
-              Expanded(
-                child: ListView.builder(
-                  controller: controller,
-                  padding: EdgeInsets.all(15),
-                  itemCount: classSchedule.length,
-                  itemBuilder: (context, index) {
-                    final dayName = classSchedule.keys.elementAt(index);
-                    final daySchedule = classSchedule[dayName] ?? {};
-
-                    // Combine consecutive periods of same class
-                    List<Map<String, dynamic>> combinedSchedule = [];
-                    MapEntry<int, String>? lastEntry;
-
-                    daySchedule.entries.forEach((entry) {
-                      if (lastEntry != null &&
-                          lastEntry!.value == entry.value &&
-                          lastEntry!.key + 1 == entry.key) {
-                        // Update the last entry's end period
-                        combinedSchedule.last['endPeriod'] = entry.key;
-                      } else {
-                        // Add new entry
-                        combinedSchedule.add({
-                          'startPeriod': entry.key,
-                          'endPeriod': entry.key,
-                          'className': entry.value,
-                        });
-                      }
-                      lastEntry = entry;
-                    });
-
-                    if (daySchedule.isEmpty) {
-                      return Container(); // Skip empty days
-                    }
-
-                    return Container(
-                      margin: EdgeInsets.only(bottom: 15),
-                      decoration: BoxDecoration(
-                        color: cardColor,
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: accentColor.withOpacity(0.2)),
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          // Day header
-                          Container(
-                            width: double.infinity,
-                            padding: EdgeInsets.symmetric(
-                              horizontal: screenWidth * 0.04,
-                              vertical: screenHeight * 0.01,
-                            ),
-                            decoration: BoxDecoration(
-                              color: cardColor,
-                              borderRadius: BorderRadius.only(
-                                topLeft: Radius.circular(12),
-                                topRight: Radius.circular(12),
-                              ),
-                              border: Border(
-                                bottom: BorderSide(
-                                  color: accentColor.withOpacity(0.2),
-                                ),
-                              ),
-                            ),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Text(
-                                  dayName,
-                                  style: TextStyle(
-                                    color: textColor,
-                                    fontSize: screenWidth * 0.045,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                                Container(
-                                  padding: EdgeInsets.symmetric(
-                                    horizontal: screenWidth * 0.03,
-                                    vertical: screenHeight * 0.005,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    color: accentColor.withOpacity(0.1),
-                                    borderRadius: BorderRadius.circular(20),
-                                  ),
-                                  child: Text(
-                                    '${daySchedule.length} Classes',
-                                    style: TextStyle(
-                                      color: accentColor,
-                                      fontSize: screenWidth * 0.035,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                          // Day schedule
-                          Padding(
-                            padding: EdgeInsets.all(screenWidth * 0.03),
-                            child: Column(
-                              children: combinedSchedule.map((schedule) {
-                                final startPeriod =
-                                    schedule['startPeriod'] as int;
-                                final endPeriod = schedule['endPeriod'] as int;
-                                final className =
-                                    schedule['className'] as String;
-                                final isLab = className.contains('Lab');
-
-                                return Container(
-                                  margin: EdgeInsets.only(
-                                      bottom: screenHeight * 0.01),
-                                  child: Row(
-                                    children: [
-                                      Container(
-                                        width: screenWidth * 0.25,
-                                        child: Text(
-                                          startPeriod == endPeriod
-                                              ? timeSlots[startPeriod]
-                                              : '${timeSlots[startPeriod].split(' - ')[0]} - ${timeSlots[endPeriod].split(' - ')[1]}',
-                                          style: TextStyle(
-                                            color: textColor,
-                                            fontSize: screenWidth * 0.035,
-                                            fontWeight: FontWeight.bold,
-                                          ),
-                                        ),
-                                      ),
-                                      SizedBox(width: screenWidth * 0.02),
-                                      Expanded(
-                                        child: Row(
-                                          children: [
-                                            Expanded(
-                                              child: Text(
-                                                className.replaceAll(
-                                                    ' (Lab)', ''),
-                                                style: TextStyle(
-                                                  color: textColor,
-                                                  fontSize: screenWidth * 0.035,
-                                                  fontWeight: FontWeight.bold,
-                                                ),
-                                                maxLines: 1,
-                                                overflow: TextOverflow.ellipsis,
-                                              ),
-                                            ),
-                                            if (isLab)
-                                              Container(
-                                                margin: EdgeInsets.only(
-                                                    left: screenWidth * 0.02),
-                                                padding: EdgeInsets.symmetric(
-                                                  horizontal:
-                                                      screenWidth * 0.02,
-                                                  vertical:
-                                                      screenHeight * 0.002,
-                                                ),
-                                                decoration: BoxDecoration(
-                                                  color:
-                                                      className.contains('BCA')
-                                                          ? Colors.blue
-                                                              .withOpacity(0.2)
-                                                          : Colors.purple
-                                                              .withOpacity(0.2),
-                                                  borderRadius:
-                                                      BorderRadius.circular(8),
-                                                ),
-                                                child: Row(
-                                                  mainAxisSize:
-                                                      MainAxisSize.min,
-                                                  children: [
-                                                    Icon(
-                                                      className.contains('BCA')
-                                                          ? Icons.laptop_mac
-                                                          : Icons.science,
-                                                      color: className
-                                                              .contains('BCA')
-                                                          ? Colors.blue
-                                                          : Colors.purple,
-                                                      size: screenWidth * 0.03,
-                                                    ),
-                                                    SizedBox(
-                                                        width:
-                                                            screenWidth * 0.01),
-                                                    Text(
-                                                      'LAB',
-                                                      style: TextStyle(
-                                                        color: className
-                                                                .contains('BCA')
-                                                            ? Colors.blue
-                                                            : Colors.purple,
-                                                        fontSize:
-                                                            screenWidth * 0.025,
-                                                        fontWeight:
-                                                            FontWeight.bold,
-                                                      ),
-                                                    ),
-                                                  ],
-                                                ),
-                                              ),
-                                          ],
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                );
-                              }).toList(),
-                            ),
-                          ),
-                        ],
-                      ),
-                    );
-                  },
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
   // Add these helper methods
   bool _isCurrentPeriod(int periodIndex) {
     final now = DateTime.now();
@@ -1890,5 +1604,240 @@ class _FacultyDashboardState extends State<FacultyDashboard>
         int.parse(nextPeriodTime[0]) * 60 + int.parse(nextPeriodTime[1]);
 
     return currentTime > periodEnd;
+  }
+
+  void _showWeeklySchedule() {
+    showDialog(
+      context: context,
+      builder: (context) => Dialog(
+        backgroundColor: Colors.transparent,
+        insetPadding: EdgeInsets.zero,
+        child: Container(
+          width: screenWidth,
+          height: screenHeight * 0.85,
+          decoration: BoxDecoration(
+            color: backgroundColor,
+            borderRadius: BorderRadius.circular(20),
+          ),
+          child: Column(
+            children: [
+              // Header
+              Container(
+                padding: EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [accentColor.withOpacity(0.8), accentColor],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                  borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Row(
+                      children: [
+                        Icon(Icons.calendar_month, color: Colors.white),
+                        SizedBox(width: 10),
+                        Text(
+                          'Weekly Schedule',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
+                    ),
+                    IconButton(
+                      icon: Icon(Icons.close, color: Colors.white),
+                      onPressed: () => Navigator.pop(context),
+                    ),
+                  ],
+                ),
+              ),
+              // Schedule Content with Column Animation
+              Expanded(
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Time Column
+                    TweenAnimationBuilder(
+                      duration: Duration(milliseconds: 500),
+                      tween: Tween<double>(begin: 0, end: 1),
+                      builder: (context, double value, child) {
+                        return Transform.translate(
+                          offset: Offset(-50 * (1 - value), 0),
+                          child: Opacity(
+                            opacity: value,
+                            child: Container(
+                              width: 80,
+                              color: cardColor,
+                              child: Column(
+                                children: [
+                                  Container(
+                                    padding: EdgeInsets.all(12),
+                                    child: Text(
+                                      'Time',
+                                      style: TextStyle(
+                                        color: textColor,
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 16,
+                                      ),
+                                    ),
+                                  ),
+                                  ...List.generate(timeSlots.length, (index) {
+                                    return Container(
+                                      height: 100,
+                                      padding: EdgeInsets.all(8),
+                                      alignment: Alignment.center,
+                                      child: Text(
+                                        timeSlots[index],
+                                        style: TextStyle(
+                                          color: textColor,
+                                          fontSize: 14,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                        textAlign: TextAlign.center,
+                                      ),
+                                    );
+                                  }),
+                                ],
+                              ),
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                    // Day Columns
+                    Expanded(
+                      child: SingleChildScrollView(
+                        scrollDirection: Axis.horizontal,
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: List.generate(6, (dayIndex) {
+                            final dayName = _getDayName(dayIndex + 1);
+                            final isToday = dayName == _getDayName(DateTime.now().weekday);
+                            final daySchedule = classSchedule[dayName] ?? {};
+
+                            return TweenAnimationBuilder(
+                              duration: Duration(milliseconds: 500),
+                              tween: Tween<double>(begin: 0, end: 1),
+                              builder: (context, double value, child) {
+                                return Transform.translate(
+                                  offset: Offset(100 * (1 - value), 0),
+                                  child: Opacity(
+                                    opacity: value,
+                                    child: Container(
+                                      width: 200,
+                                      decoration: BoxDecoration(
+                                        border: Border(
+                                          left: BorderSide(
+                                            color: textColor.withOpacity(0.1),
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                );
+                              },
+                              child: Column(
+                                children: [
+                                  Container(
+                                    padding: EdgeInsets.all(12),
+                                    decoration: BoxDecoration(
+                                      color: cardColor,
+                                      border: Border(
+                                        bottom: BorderSide(
+                                          color: isToday ? accentColor : Colors.transparent,
+                                          width: 2,
+                                        ),
+                                      ),
+                                    ),
+                                    child: Text(
+                                      dayName,
+                                      style: TextStyle(
+                                        color: isToday ? accentColor : textColor,
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 16,
+                                      ),
+                                      textAlign: TextAlign.center,
+                                    ),
+                                  ),
+                                  // Add class cells
+                                  ...List.generate(timeSlots.length, (timeIndex) {
+                                    final classInfo = daySchedule[timeIndex];
+                                    return classInfo != null
+                                        ? _buildAnimatedClassCell(
+                                            classInfo,
+                                            isCurrentPeriod: _isCurrentPeriod(timeIndex) && isToday,
+                                          )
+                                        : Container(height: 100);
+                                  }),
+                                ],
+                              ),
+                            );
+                          }),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildAnimatedClassCell(String classInfo, {bool isCurrentPeriod = false}) {
+    final isLab = classInfo.contains('Lab');
+    return TweenAnimationBuilder(
+      duration: Duration(milliseconds: 300),
+      tween: Tween<double>(begin: 0, end: 1),
+      builder: (context, double value, child) {
+        return Transform.scale(
+          scale: value,
+          child: Container(
+            padding: EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: isCurrentPeriod
+                  ? accentColor.withOpacity(0.2)
+                  : isLab
+                      ? (classInfo.contains('BCA')
+                          ? Colors.blue.withOpacity(0.1)
+                          : Colors.purple.withOpacity(0.1))
+                      : accentColor.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(
+                color: isCurrentPeriod ? accentColor : Colors.transparent,
+              ),
+            ),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                if (isLab)
+                  Icon(
+                    classInfo.contains('BCA') ? Icons.laptop_mac : Icons.science,
+                    color: classInfo.contains('BCA') ? Colors.blue : Colors.purple,
+                    size: 16,
+                  ),
+                Text(
+                  classInfo.replaceAll(' (Lab)', ''),
+                  style: TextStyle(
+                    color: isCurrentPeriod ? accentColor : textColor,
+                    fontSize: 14,
+                    fontWeight: isCurrentPeriod ? FontWeight.bold : FontWeight.w500,
+                  ),
+                  textAlign: TextAlign.center,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
   }
 }
