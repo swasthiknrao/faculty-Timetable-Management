@@ -1,0 +1,49 @@
+{
+  "project_info": {
+    "project_number": "19206117906",
+    "firebase_url": "https://faculty-66bd7-default-rtdb.asia-southeast1.firebasedatabase.app",
+    "project_id": "faculty-66bd7",
+    "storage_bucket": "faculty-66bd7.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:19206117906:android:53a8dbd5a63811cb81d6cb",
+        "android_client_info": {
+          "package_name": "com.example.my_app2"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBCoogLgUhEQqxtNmFTIU_DVURQVmF9BD8"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:19206117906:android:ad4475671b80927781d6cb",
+        "android_client_info": {
+          "package_name": "com.faculty.management"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBCoogLgUhEQqxtNmFTIU_DVURQVmF9BD8"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
