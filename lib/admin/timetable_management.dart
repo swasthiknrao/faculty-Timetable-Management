@@ -234,7 +234,6 @@ class _TimetableManagementState extends State<TimetableManagement>
                       color: Color.fromRGBO(153, 55, 30, 1),
                       fontSize: 12,
                     ),
-                  ),
                 ],
               ),
             ),
@@ -860,38 +859,76 @@ class _TimetableManagementState extends State<TimetableManagement>
                           child: const Text('Cancel'),
                         ),
                         const SizedBox(width: 12),
-                        ElevatedButton(
-                          onPressed: !isLabSelected &&
-                                  subjectController.text.trim().isNotEmpty &&
-                                  selectedFacultyId != null
-                              ? () {
-                                  _addNewPeriod(
-                                    periodNumber,
-                                    subjectController.text.trim(),
-                                    selectedFacultyId!,
-                                    selectedFacultyName!,
-                                  );
-                                  Navigator.pop(context);
-                                }
-                              : null,
+                        ElevatedButton.icon(
+                          icon: const Icon(
+                            Icons.save,
+                            color: Colors.white,
+                          ),
+                          label: const Text(
+                            'Save',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
                           style: ElevatedButton.styleFrom(
                             backgroundColor:
                                 const Color.fromRGBO(153, 55, 30, 1),
-                            disabledBackgroundColor:
-                                const Color.fromRGBO(153, 55, 30, 0.3),
                             padding: const EdgeInsets.symmetric(
-                              horizontal: 20,
-                              vertical: 12,
-                            ),
+                                horizontal: 20, vertical: 12),
                           ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(isEditing ? Icons.save : Icons.add),
-                              const SizedBox(width: 8),
-                              Text(isEditing ? 'Save Changes' : 'Add Period'),
-                            ],
-                          ),
+                          onPressed: () async {
+                            try {
+                              final Map<String, dynamic> formattedData = {};
+
+                              timetableData.forEach((day, periods) {
+                                formattedData[day] = {};
+                                periods.forEach((period, data) {
+                                  if (data is LabSession) {
+                                    formattedData[day][period.toString()] = {
+                                      'type': 'lab',
+                                      'subjects': data.subjects,
+                                      'facultyNames': data.facultyNames,
+                                      'periods': data.periods,
+                                    };
+                                  } else if (data is Map) {
+                                    // Check if data is Map
+                                    formattedData[day][period.toString()] = {
+                                      'type': 'theory',
+                                      'subject': data['subject'],
+                                      'faculty_id': data['faculty_id'],
+                                      'faculty_name': data['faculty_name'],
+                                    };
+                                  }
+                                });
+                              });
+
+                              // Save to Firebase
+                              await _timetableService.saveTimetable(
+                                course: widget.course,
+                                year: widget.year,
+                                section: widget.section,
+                                timetableData: formattedData,
+                              );
+
+                              setState(() {
+                                hasUnsavedChanges = false;
+                              });
+
+                              if (mounted) {
+                                Navigator.pop(context);
+                                _showSuccessMessage();
+                              }
+                            } catch (e) {
+                              Navigator.pop(context);
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text('Error saving timetable: $e'),
+                                  backgroundColor: Colors.red,
+                                ),
+                              );
+                            }
+                          },
                         ),
                       ],
                     ),
@@ -997,15 +1034,12 @@ class _TimetableManagementState extends State<TimetableManagement>
                         ),
                       ),
                       child: Row(
-                        children: [
-                          const Icon(
-                            Icons.science,
-                            color: Color.fromRGBO(153, 55, 30, 1),
-                            size: 24,
-                          ),
-                          const SizedBox(width: 12),
-                          const Text(
-                            'Lab Session',
+                        children: const [
+                          Icon(Icons.people,
+                              color: Color.fromRGBO(153, 55, 30, 1)),
+                          SizedBox(width: 12),
+                          Text(
+                            'Select Faculty',
                             style: TextStyle(
                               color: Color.fromRGBO(159, 160, 162, 1),
                               fontSize: 20,
@@ -1015,7 +1049,7 @@ class _TimetableManagementState extends State<TimetableManagement>
                         ],
                       ),
                     ),
-                    const SizedBox(height: 24),
+                    const SizedBox(height: 16),
 
                     // Multiple Faculty Selection
                     _buildMultipleFacultySection(
@@ -1507,11 +1541,23 @@ class _TimetableManagementState extends State<TimetableManagement>
             ),
           ),
           ElevatedButton.icon(
-            icon: const Icon(Icons.save),
-            label: const Text('Save'),
+            icon: const Icon(
+              Icons.save,
+              color: Colors.white,
+            ),
+            label: const Text(
+              'Save',
+              style: TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color.fromRGBO(153, 55, 30, 1),
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+            ),
             onPressed: () async {
               try {
-                // Convert timetable data to saveable format
                 final Map<String, dynamic> formattedData = {};
 
                 timetableData.forEach((day, periods) {
@@ -1524,10 +1570,13 @@ class _TimetableManagementState extends State<TimetableManagement>
                         'facultyNames': data.facultyNames,
                         'periods': data.periods,
                       };
-                    } else {
+                    } else if (data is Map) {
+                      // Check if data is Map
                       formattedData[day][period.toString()] = {
                         'type': 'theory',
                         'subject': data['subject'],
+                        'faculty_id': data['faculty_id'],
+                        'faculty_name': data['faculty_name'],
                       };
                     }
                   });
@@ -1547,12 +1596,7 @@ class _TimetableManagementState extends State<TimetableManagement>
 
                 if (mounted) {
                   Navigator.pop(context);
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Timetable saved successfully!'),
-                      backgroundColor: Color.fromRGBO(153, 55, 30, 1),
-                    ),
-                  );
+                  _showSuccessMessage();
                 }
               } catch (e) {
                 Navigator.pop(context);
@@ -1653,6 +1697,13 @@ class _TimetableManagementState extends State<TimetableManagement>
         'faculty_name': facultyName,
       };
 
+      setState(() {
+        timetableData[selectedDay!] ??= {};
+        timetableData[selectedDay!]![periodNumber] =
+            data; // Save complete data object
+        hasUnsavedChanges = true;
+      });
+
       await _timetableService.updateTimeSlot(
         course: widget.course,
         year: widget.year,
@@ -1661,16 +1712,6 @@ class _TimetableManagementState extends State<TimetableManagement>
         period: periodNumber.toString(),
         slotData: data,
       );
-
-      setState(() {
-        timetableData[selectedDay!] ??= {};
-        timetableData[selectedDay!]![periodNumber] = {
-          'subject': subject,
-          'faculty_id': facultyId,
-          'faculty_name': facultyName,
-        };
-        hasUnsavedChanges = true;
-      });
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -1908,58 +1949,65 @@ class _TimetableManagementState extends State<TimetableManagement>
 
   void _showFacultySelectionDialog(BuildContext context,
       Function(Map<String, String>) onSelect, int periodNumber) {
-    bool sortByName = true;
-    String searchQuery = '';
+    final dialogHeight = MediaQuery.of(context).size.height * 0.75;
+    final dialogWidth = MediaQuery.of(context).size.width * 0.9;
+    final padding = MediaQuery.of(context).size.width * 0.04;
+    final iconSize = MediaQuery.of(context).size.width * 0.05;
+    final fontSize = MediaQuery.of(context).size.width * 0.04;
 
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (context) => StatefulBuilder(
-        builder: (context, setState) => AnimatedContainer(
-          duration: const Duration(milliseconds: 300),
-          curve: Curves.easeInOut,
-          decoration: BoxDecoration(
-            color: const Color.fromRGBO(34, 39, 42, 1),
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
-          ),
-          height: MediaQuery.of(context).size.height * 0.75,
-          child: Column(
-            children: [
-              // Header
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: const Color.fromRGBO(24, 29, 32, 1),
-                  borderRadius: BorderRadius.circular(10),
-                  border: Border.all(
-                    color: const Color.fromRGBO(153, 55, 30, 0.3),
-                  ),
-                ),
-                child: Row(
-                  children: const [
-                    Icon(Icons.people, color: Color.fromRGBO(153, 55, 30, 1)),
-                    SizedBox(width: 12),
-                    Text(
-                      'Select Faculty',
-                      style: TextStyle(
-                        color: Color.fromRGBO(159, 160, 162, 1),
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ],
+      builder: (context) => AnimatedContainer(
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeOutCubic,
+        height: dialogHeight,
+        width: dialogWidth,
+        padding: EdgeInsets.all(padding),
+        decoration: BoxDecoration(
+          color: const Color.fromRGBO(34, 39, 42, 1),
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+        ),
+        child: Column(
+          children: [
+            // Header
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: const Color.fromRGBO(24, 29, 32, 1),
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(
+                  color: const Color.fromRGBO(153, 55, 30, 0.3),
                 ),
               ),
-              const SizedBox(height: 16),
-              // Search and Sort
-              Row(
+              child: Row(
+                children: const [
+                  Icon(Icons.people, color: Color.fromRGBO(153, 55, 30, 1)),
+                  SizedBox(width: 12),
+                  Text(
+                    'Select Faculty',
+                    style: TextStyle(
+                      color: Color.fromRGBO(159, 160, 162, 1),
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 16),
+            // Search and Sort
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: Row(
                 children: [
                   Expanded(
                     child: TextField(
                       style: const TextStyle(
                           color: Color.fromRGBO(159, 160, 162, 1)),
-                      onChanged: (value) => setState(() => searchQuery = value),
+                      onChanged: (value) =>
+                          setState(() => searchQuery = value),
                       decoration: InputDecoration(
                         hintText: 'Search faculty...',
                         hintStyle: const TextStyle(
@@ -1986,193 +2034,186 @@ class _TimetableManagementState extends State<TimetableManagement>
                       ),
                     ),
                   ),
+                  const SizedBox(width: 8),
+                  Container(
+                    decoration: BoxDecoration(
+                      color: const Color.fromRGBO(24, 29, 32, 1),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                          color: const Color.fromRGBO(153, 55, 30, 0.3)),
+                    ),
+                    child: IconButton(
+                      icon: Icon(
+                        sortByName ? Icons.sort_by_alpha : Icons.category,
+                        color: const Color.fromRGBO(153, 55, 30, 1),
+                      ),
+                      onPressed: () =>
+                          setState(() => sortByName = !sortByName),
+                    ),
+                  ),
                 ],
               ),
-              const SizedBox(width: 8),
-              Container(
-                decoration: BoxDecoration(
-                  color: const Color.fromRGBO(24, 29, 32, 1),
-                  borderRadius: BorderRadius.circular(12),
-                  border:
-                      Border.all(color: const Color.fromRGBO(153, 55, 30, 0.3)),
-                ),
-                child: IconButton(
-                  icon: Icon(
-                    sortByName ? Icons.sort_by_alpha : Icons.category,
-                    color: const Color.fromRGBO(153, 55, 30, 1),
-                  ),
-                  onPressed: () => setState(() => sortByName = !sortByName),
-                ),
-              ),
-              const SizedBox(height: 16),
-              // Faculty List
-              Expanded(
-                child: StreamBuilder<QuerySnapshot>(
-                  stream: FirebaseFirestore.instance
-                      .collection('faculty')
-                      .snapshots(),
-                  builder: (context, snapshot) {
-                    if (!snapshot.hasData) {
-                      return const Center(
-                        child: CircularProgressIndicator(
-                          color: Color.fromRGBO(153, 55, 30, 1),
-                          strokeWidth: 3,
-                        ),
-                      );
-                    }
+            ),
+            const SizedBox(height: 16),
+            // Faculty List
+            Expanded(
+              child: StreamBuilder<QuerySnapshot>(
+                stream: FirebaseFirestore.instance
+                    .collection('faculty')
+                    .snapshots(),
+                builder: (context, snapshot) {
+                  if (!snapshot.hasData) {
+                    return const Center(
+                      child: CircularProgressIndicator(
+                        color: Color.fromRGBO(153, 55, 30, 1),
+                        strokeWidth: 3,
+                      ),
+                    );
+                  }
 
-                    var facultyList =
-                        _getFacultyList(snapshot, searchQuery, sortByName);
+                  var facultyList =
+                      _getFacultyList(snapshot, searchQuery, sortByName);
 
-                    return ListView.builder(
-                      itemCount: facultyList.length,
-                      itemBuilder: (context, index) {
-                        final faculty = facultyList[index];
+                  return ListView.builder(
+                    itemCount: facultyList.length,
+                    itemBuilder: (context, index) {
+                      final faculty = facultyList[index];
 
-                        return FutureBuilder<Map<String, dynamic>?>(
-                          future: _checkFacultyAvailability(
-                              faculty['id']!, periodNumber),
-                          builder: (context, availabilitySnapshot) {
-                            final isEngaged = availabilitySnapshot.data != null;
-                            final engagement = availabilitySnapshot.data;
+                      return FutureBuilder<Map<String, dynamic>?>(
+                        future: _checkFacultyAvailability(
+                            faculty['id']!, periodNumber),
+                        builder: (context, availabilitySnapshot) {
+                          final isEngaged = availabilitySnapshot.data != null;
+                          final engagement = availabilitySnapshot.data;
 
-                            return AnimatedContainer(
-                              duration: const Duration(milliseconds: 300),
-                              margin: EdgeInsets.only(
-                                bottom: 8,
-                                left: isEngaged ? 8 : 16,
-                                right: isEngaged ? 8 : 16,
+                          return AnimatedContainer(
+                            duration: const Duration(milliseconds: 300),
+                            margin: EdgeInsets.only(
+                              bottom: 8,
+                              left: isEngaged ? 8 : 16,
+                              right: isEngaged ? 8 : 16,
+                            ),
+                            decoration: BoxDecoration(
+                              color: const Color.fromRGBO(24, 29, 32, 1),
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(
+                                color: isEngaged
+                                    ? const Color.fromRGBO(153, 55, 30, 0.5)
+                                    : const Color.fromRGBO(153, 55, 30, 0.3),
+                                width: isEngaged ? 2 : 1,
                               ),
-                              decoration: BoxDecoration(
-                                color: const Color.fromRGBO(24, 29, 32, 1),
-                                borderRadius: BorderRadius.circular(12),
-                                border: Border.all(
-                                  color: isEngaged
-                                      ? const Color.fromRGBO(153, 55, 30, 0.5)
-                                      : const Color.fromRGBO(153, 55, 30, 0.3),
-                                  width: isEngaged ? 2 : 1,
-                                ),
-                                boxShadow: isEngaged
-                                    ? [
-                                        BoxShadow(
-                                          color: const Color.fromRGBO(
-                                              153, 55, 30, 0.2),
-                                          blurRadius: 8,
-                                          spreadRadius: 1,
-                                        ),
-                                      ]
-                                    : null,
-                              ),
-                              child: ClipRRect(
-                                borderRadius: BorderRadius.circular(12),
-                                child: Material(
-                                  color: Colors.transparent,
-                                  child: InkWell(
-                                    onTap: () {
-                                      if (isEngaged) {
-                                        _showEngagementWarning(
-                                            context, faculty, engagement!);
-                                      } else {
-                                        onSelect(
-                                            Map<String, String>.from(faculty));
-                                        Navigator.pop(context);
-                                      }
-                                    },
-                                    child: Column(
-                                      children: [
-                                        ListTile(
-                                          tileColor: Colors.transparent,
-                                          selectedTileColor:
+                              boxShadow: isEngaged
+                                  ? [
+                                      BoxShadow(
+                                        color: const Color.fromRGBO(
+                                            153, 55, 30, 0.2),
+                                        blurRadius: 8,
+                                        spreadRadius: 1,
+                                      ),
+                                    ]
+                                  : null,
+                            ),
+                            child: ClipRRect(
+                              borderRadius: BorderRadius.circular(12),
+                              child: Material(
+                                color: Colors.transparent,
+                                child: InkWell(
+                                  onTap: () {
+                                    if (isEngaged) {
+                                      _showEngagementWarning(
+                                          context, faculty, engagement!);
+                                    } else {
+                                      onSelect(
+                                          Map<String, String>.from(faculty));
+                                      Navigator.pop(context);
+                                    }
+                                  },
+                                  child: Column(
+                                    children: [
+                                      ListTile(
+                                        tileColor: Colors.transparent,
+                                        selectedTileColor:
+                                            const Color.fromRGBO(
+                                                153, 55, 30, 0.2),
+                                        leading: CircleAvatar(
+                                          backgroundColor:
                                               const Color.fromRGBO(
                                                   153, 55, 30, 0.2),
-                                          leading: CircleAvatar(
-                                            backgroundColor:
-                                                const Color.fromRGBO(
-                                                    153, 55, 30, 0.2),
-                                            child: Text(
-                                              faculty['name']![0].toUpperCase(),
-                                              style: const TextStyle(
-                                                color: Color.fromRGBO(
-                                                    153, 55, 30, 1),
-                                                fontWeight: FontWeight.bold,
-                                              ),
-                                            ),
-                                          ),
-                                          title: Text(
-                                            faculty['name']!,
+                                          child: Text(
+                                            faculty['name']![0].toUpperCase(),
                                             style: const TextStyle(
                                               color: Color.fromRGBO(
-                                                  159, 160, 162, 1),
+                                                  153, 55, 30, 1),
                                               fontWeight: FontWeight.bold,
                                             ),
                                           ),
-                                          subtitle: Text(
-                                            faculty['department']!,
-                                            style: const TextStyle(
-                                              color: Color.fromRGBO(
-                                                  159, 160, 162, 0.7),
-                                            ),
+                                        ),
+                                        title: Text(
+                                          faculty['name']!,
+                                          style: const TextStyle(
+                                            color: Color.fromRGBO(
+                                                159, 160, 162, 1),
+                                            fontWeight: FontWeight.bold,
                                           ),
                                         ),
-                                        if (isEngaged)
-                                          AnimatedContainer(
-                                            duration: const Duration(
-                                                milliseconds: 300),
-                                            width: double.infinity,
-                                            padding: const EdgeInsets.symmetric(
-                                              vertical: 8,
-                                              horizontal: 16,
-                                            ),
-                                            decoration: const BoxDecoration(
+                                        subtitle: Text(
+                                          faculty['department']!,
+                                          style: const TextStyle(
+                                            color: Color.fromRGBO(
+                                                159, 160, 162, 0.7),
+                                          ),
+                                        ),
+                                      ),
+                                      if (isEngaged)
+                                        AnimatedContainer(
+                                          duration: const Duration(
+                                              milliseconds: 300),
+                                          width: double.infinity,
+                                          padding: const EdgeInsets.symmetric(
+                                            vertical: 8,
+                                            horizontal: 16,
+                                          ),
+                                          decoration: const BoxDecoration(
                                               color: Color.fromRGBO(
                                                   153, 55, 30, 0.1),
                                               borderRadius:
                                                   BorderRadius.vertical(
                                                 bottom: Radius.circular(12),
+                                              )),
+                                          child: Row(
+                                            children: [
+                                              const Icon(
+                                                Icons.schedule,
+                                                color: Color.fromRGBO(
+                                                    153, 55, 30, 1),
+                                                size: 16,
                                               ),
-                                            ),
-                                            child: Row(
-                                              children: [
-                                                const Icon(
-                                                  Icons.schedule,
+                                              const SizedBox(width: 8),
+                                              Text(
+                                                'Engaged in ${engagement!['course']} ${engagement['year']}',
+                                                style: const TextStyle(
                                                   color: Color.fromRGBO(
                                                       153, 55, 30, 1),
-                                                  size: 16,
+                                                  fontWeight: FontWeight.bold,
                                                 ),
-                                                const SizedBox(width: 8),
-                                                Text(
-                                                  'Engaged in ${engagement!['course']} ${engagement['year']}',
-                                                  style: TextStyle(
-                                                    color: const Color.fromRGBO(
-                                                        153, 55, 30, 1),
-                                                    fontSize:
-                                                        MediaQuery.of(context)
-                                                                    .size
-                                                                    .width <
-                                                                400
-                                                            ? 12
-                                                            : 14,
-                                                    fontWeight: FontWeight.bold,
-                                                  ),
-                                                ),
-                                              ],
-                                            ),
+                                              ),
+                                            ],
                                           ),
-                                      ],
-                                    ),
+                                        ),
+                                    ],
                                   ),
                                 ),
                               ),
-                            );
-                          },
-                        );
-                      },
-                    );
-                  },
-                ),
+                            ),
+                          );
+                        },
+                      );
+                    },
+                  );
+                },
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );
@@ -2295,15 +2336,13 @@ class _TimetableManagementState extends State<TimetableManagement>
         // If lab session, delete all related periods
         if (data is LabSession) {
           for (final labPeriod in data.periods) {
-            if (labPeriod != period) {
-              await _timetableService.deleteTimeSlot(
-                course: widget.course,
-                year: widget.year,
-                section: widget.section,
-                day: day,
-                period: labPeriod.toString(),
-              );
-            }
+            await _timetableService.deleteTimeSlot(
+              course: widget.course,
+              year: widget.year,
+              section: widget.section,
+              day: day,
+              period: labPeriod.toString(),
+            );
           }
         }
 
@@ -2375,5 +2414,56 @@ class _TimetableManagementState extends State<TimetableManagement>
         );
       }
     }
+  }
+
+  late MediaQueryData _mediaQuery;
+  late double _screenWidth;
+  late double _screenHeight;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _mediaQuery = MediaQuery.of(context);
+    _screenWidth = _mediaQuery.size.width;
+    _screenHeight = _mediaQuery.size.height;
+  }
+
+  void _showSuccessMessage() {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: TweenAnimationBuilder<double>(
+          duration: const Duration(milliseconds: 300),
+          tween: Tween<double>(begin: 0, end: 1),
+          builder: (context, value, child) {
+            return Opacity(
+              opacity: value,
+              child: Transform.translate(
+                offset: Offset(0, 20 * (1 - value)),
+                child: const Row(
+                  children: [
+                    Icon(Icons.check_circle, color: Colors.white),
+                    SizedBox(width: 8),
+                    Text(
+                      'Timetable saved successfully!',
+                      style: TextStyle(color: Colors.white),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
+        ),
+        backgroundColor: const Color.fromRGBO(46, 125, 50, 1),
+        duration: const Duration(seconds: 2),
+        behavior: SnackBarBehavior.floating,
+        margin: EdgeInsets.only(
+          bottom: _screenHeight * 0.02,
+          left: _screenWidth * 0.04,
+          right: _screenWidth * 0.04,
+        ),
+        elevation: 4,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+      ),
+    );
   }
 }
