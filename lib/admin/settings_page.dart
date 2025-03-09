@@ -9,6 +9,7 @@ import '../utils/dialog_route.dart';
 import '../utils/theme_provider.dart';
 
 class SettingsPage extends StatefulWidget {
+  
   const SettingsPage({super.key});
 
   @override
