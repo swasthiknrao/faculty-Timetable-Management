@@ -234,7 +234,7 @@ class _TimetableManagementState extends State<TimetableManagement>
                       color: Color.fromRGBO(153, 55, 30, 1),
                       fontSize: 12,
                     ),
-                ],
+               ) ],
               ),
             ),
           IconButton(
@@ -647,25 +647,20 @@ class _TimetableManagementState extends State<TimetableManagement>
     final entry = timetableData[selectedDay]?[periodNumber];
     final isEditing = entry != null;
 
-    // Initialize controllers with existing data if editing
     final TextEditingController subjectController = TextEditingController(
       text: isEditing && entry is! LabSession
           ? (entry is Map ? entry['subject'] : entry.toString())
           : '',
     );
 
-    // Create state variables for selected faculty
     String? selectedFacultyId;
     String? selectedFacultyName;
+    final TextEditingController facultyController = TextEditingController();
 
-    final TextEditingController facultyController = TextEditingController(
-      text: isEditing && entry is Map ? entry['faculty_name'] ?? '' : '',
-    );
-
-    // Initialize faculty data if editing
     if (isEditing && entry is Map) {
       selectedFacultyId = entry['faculty_id'];
       selectedFacultyName = entry['faculty_name'];
+      facultyController.text = entry['faculty_name'] ?? '';
     }
 
     bool isLabSelected = entry is LabSession;
@@ -859,76 +854,32 @@ class _TimetableManagementState extends State<TimetableManagement>
                           child: const Text('Cancel'),
                         ),
                         const SizedBox(width: 12),
-                        ElevatedButton.icon(
-                          icon: const Icon(
-                            Icons.save,
-                            color: Colors.white,
-                          ),
-                          label: const Text(
-                            'Save',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor:
-                                const Color.fromRGBO(153, 55, 30, 1),
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 20, vertical: 12),
-                          ),
+                        ElevatedButton(
                           onPressed: () async {
-                            try {
-                              final Map<String, dynamic> formattedData = {};
-
-                              timetableData.forEach((day, periods) {
-                                formattedData[day] = {};
-                                periods.forEach((period, data) {
-                                  if (data is LabSession) {
-                                    formattedData[day][period.toString()] = {
-                                      'type': 'lab',
-                                      'subjects': data.subjects,
-                                      'facultyNames': data.facultyNames,
-                                      'periods': data.periods,
-                                    };
-                                  } else if (data is Map) {
-                                    // Check if data is Map
-                                    formattedData[day][period.toString()] = {
-                                      'type': 'theory',
-                                      'subject': data['subject'],
-                                      'faculty_id': data['faculty_id'],
-                                      'faculty_name': data['faculty_name'],
-                                    };
-                                  }
-                                });
-                              });
-
-                              // Save to Firebase
-                              await _timetableService.saveTimetable(
-                                course: widget.course,
-                                year: widget.year,
-                                section: widget.section,
-                                timetableData: formattedData,
+                            if (subjectController.text.isNotEmpty && selectedFacultyId != null) {
+                              await _addNewPeriod(
+                                periodNumber,
+                                subjectController.text,
+                                selectedFacultyId!,
+                                selectedFacultyName ?? '',
                               );
-
+                              
                               setState(() {
-                                hasUnsavedChanges = false;
+                                hasUnsavedChanges = true;
                               });
-
+                              
                               if (mounted) {
                                 Navigator.pop(context);
-                                _showSuccessMessage();
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text('Period updated successfully'),
+                                    backgroundColor: Color.fromRGBO(46, 125, 50, 1),
+                                  ),
+                                );
                               }
-                            } catch (e) {
-                              Navigator.pop(context);
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  content: Text('Error saving timetable: $e'),
-                                  backgroundColor: Colors.red,
-                                ),
-                              );
                             }
                           },
+                          child: const Text('Save'),
                         ),
                       ],
                     ),
@@ -1687,7 +1638,7 @@ class _TimetableManagementState extends State<TimetableManagement>
     );
   }
 
-  void _addNewPeriod(int periodNumber, String subject, String facultyId,
+  Future<void> _addNewPeriod(int periodNumber, String subject, String facultyId,
       String facultyName) async {
     try {
       final data = {
@@ -2148,21 +2099,6 @@ class _TimetableManagementState extends State<TimetableManagement>
                                             ),
                                           ),
                                         ),
-                                        title: Text(
-                                          faculty['name']!,
-                                          style: const TextStyle(
-                                            color: Color.fromRGBO(
-                                                159, 160, 162, 1),
-                                            fontWeight: FontWeight.bold,
-                                          ),
-                                        ),
-                                        subtitle: Text(
-                                          faculty['department']!,
-                                          style: const TextStyle(
-                                            color: Color.fromRGBO(
-                                                159, 160, 162, 0.7),
-                                          ),
-                                        ),
                                       ),
                                       if (isEngaged)
                                         AnimatedContainer(
@@ -2466,4 +2402,8 @@ class _TimetableManagementState extends State<TimetableManagement>
       ),
     );
   }
+
+  // Add these at the top with other state variables
+  String searchQuery = '';
+  bool sortByName = true;
 }
