@@ -58,6 +58,9 @@ class _TimetableManagementState extends State<TimetableManagement>
     7: '3:50 - 4:40',
   };
   bool hasUnsavedChanges = false;
+  final ScrollController _scrollController = ScrollController();
+  String searchQuery = '';
+  bool sortByName = true;
 
   final List<int> morningLabSlots = [0, 1, 2, 3]; // 8:50 to 12:25
   final List<int> afternoonLabSlots = [4, 5, 6, 7]; // 1:50 to 4:40
@@ -181,6 +184,7 @@ class _TimetableManagementState extends State<TimetableManagement>
   @override
   void dispose() {
     _controller.dispose();
+    _scrollController.dispose();
     super.dispose();
   }
 
@@ -324,35 +328,6 @@ class _TimetableManagementState extends State<TimetableManagement>
                                             153, 55, 30, 0.3),
                                     width: 1,
                                   ),
-                                ),
-                                child: Column(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    Text(
-                                      day.substring(
-                                          0, 3), // Show first 3 letters
-                                      style: TextStyle(
-                                        color: const Color.fromRGBO(
-                                            159, 160, 162, 1),
-                                        fontSize: 16,
-                                        fontWeight: isSelected
-                                            ? FontWeight.bold
-                                            : FontWeight.normal,
-                                      ),
-                                    ),
-                                    const SizedBox(height: 4),
-                                    Container(
-                                      width: 6,
-                                      height: 6,
-                                      decoration: BoxDecoration(
-                                        shape: BoxShape.circle,
-                                        color: isSelected
-                                            ? const Color.fromRGBO(
-                                                159, 160, 162, 1)
-                                            : Colors.transparent,
-                                      ),
-                                    ),
-                                  ],
                                 ),
                               ),
                             ),
@@ -1926,85 +1901,39 @@ class _TimetableManagementState extends State<TimetableManagement>
         ),
         child: Column(
           children: [
-            // Header
+            // Search and Sort
             Container(
-              padding: const EdgeInsets.all(12),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               decoration: BoxDecoration(
                 color: const Color.fromRGBO(24, 29, 32, 1),
-                borderRadius: BorderRadius.circular(10),
+                borderRadius: BorderRadius.circular(12),
                 border: Border.all(
                   color: const Color.fromRGBO(153, 55, 30, 0.3),
                 ),
               ),
-              child: Row(
-                children: const [
-                  Icon(Icons.people, color: Color.fromRGBO(153, 55, 30, 1)),
-                  SizedBox(width: 12),
-                  Text(
-                    'Select Faculty',
-                    style: TextStyle(
-                      color: Color.fromRGBO(159, 160, 162, 1),
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                    ),
+              child: TextField(
+                style: const TextStyle(
+                  color: Color.fromRGBO(159, 160, 162, 1),
+                  fontSize: 16,
+                ),
+                onChanged: (value) => setState(() => searchQuery = value),
+                decoration: InputDecoration(
+                  hintText: 'Search faculty...',
+                  hintStyle: const TextStyle(
+                    color: Color.fromRGBO(159, 160, 162, 0.7),
+                    fontSize: 16,
                   ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 16),
-            // Search and Sort
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: TextField(
-                      style: const TextStyle(
-                          color: Color.fromRGBO(159, 160, 162, 1)),
-                      onChanged: (value) => setState(() => searchQuery = value),
-                      decoration: InputDecoration(
-                        hintText: 'Search faculty...',
-                        hintStyle: const TextStyle(
-                            color: Color.fromRGBO(159, 160, 162, 0.7)),
-                        prefixIcon: const Icon(Icons.search,
-                            color: Color.fromRGBO(153, 55, 30, 1)),
-                        filled: true,
-                        fillColor: const Color.fromRGBO(24, 29, 32, 1),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          borderSide: const BorderSide(
-                              color: Color.fromRGBO(153, 55, 30, 0.3)),
-                        ),
-                        enabledBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          borderSide: const BorderSide(
-                              color: Color.fromRGBO(153, 55, 30, 0.3)),
-                        ),
-                        focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          borderSide: const BorderSide(
-                              color: Color.fromRGBO(153, 55, 30, 1)),
-                        ),
-                      ),
-                    ),
+                  prefixIcon: const Icon(
+                    Icons.search,
+                    color: Color.fromRGBO(153, 55, 30, 1),
+                    size: 24,
                   ),
-                  const SizedBox(width: 8),
-                  Container(
-                    decoration: BoxDecoration(
-                      color: const Color.fromRGBO(24, 29, 32, 1),
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(
-                          color: const Color.fromRGBO(153, 55, 30, 0.3)),
-                    ),
-                    child: IconButton(
-                      icon: Icon(
-                        sortByName ? Icons.sort_by_alpha : Icons.category,
-                        color: const Color.fromRGBO(153, 55, 30, 1),
-                      ),
-                      onPressed: () => setState(() => sortByName = !sortByName),
-                    ),
+                  border: InputBorder.none,
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 12,
                   ),
-                ],
+                ),
               ),
             ),
             const SizedBox(height: 16),
@@ -2046,6 +1975,7 @@ class _TimetableManagementState extends State<TimetableManagement>
                       return Stack(
                         children: [
                           ListView.builder(
+                            controller: _scrollController,
                             itemCount: sortedGroups.length,
                             itemBuilder: (context, index) {
                               String letter = sortedGroups[index];
@@ -2101,7 +2031,6 @@ class _TimetableManagementState extends State<TimetableManagement>
                                                     ),
                                                     child: Row(
                                                       children: [
-                                                        // Faculty initial
                                                         Container(
                                                           width: 40,
                                                           height: 40,
@@ -2136,7 +2065,6 @@ class _TimetableManagementState extends State<TimetableManagement>
                                                         ),
                                                         const SizedBox(
                                                             width: 16),
-                                                        // Faculty details
                                                         Expanded(
                                                           child: Column(
                                                             crossAxisAlignment:
@@ -2144,8 +2072,15 @@ class _TimetableManagementState extends State<TimetableManagement>
                                                                     .start,
                                                             children: [
                                                               Text(
-                                                                faculty[
-                                                                    'name']!,
+                                                                faculty['name']!
+                                                                    .split(' ')
+                                                                    .map((word) =>
+                                                                        word[0]
+                                                                            .toUpperCase() +
+                                                                        word
+                                                                            .substring(1)
+                                                                            .toLowerCase())
+                                                                    .join(' '),
                                                                 style:
                                                                     const TextStyle(
                                                                   color: Color
@@ -2163,8 +2098,15 @@ class _TimetableManagementState extends State<TimetableManagement>
                                                               const SizedBox(
                                                                   height: 4),
                                                               Text(
-                                                                faculty[
-                                                                    'department']!,
+                                                                faculty['department']!
+                                                                    .split(' ')
+                                                                    .map((word) =>
+                                                                        word[0]
+                                                                            .toUpperCase() +
+                                                                        word
+                                                                            .substring(1)
+                                                                            .toLowerCase())
+                                                                    .join(' '),
                                                                 style:
                                                                     const TextStyle(
                                                                   color: Color
@@ -2217,12 +2159,15 @@ class _TimetableManagementState extends State<TimetableManagement>
                                       String.fromCharCode(65 + index); // A-Z
                                   return GestureDetector(
                                     onTap: () {
-                                      // Scroll to the corresponding letter section
                                       final letterIndex =
                                           sortedGroups.indexOf(letter);
                                       if (letterIndex != -1) {
-                                        Scrollable.ensureVisible(
-                                          context,
+                                        final itemHeight = 80.0;
+                                        final targetPosition =
+                                            letterIndex * itemHeight;
+
+                                        _scrollController.animateTo(
+                                          targetPosition,
                                           duration:
                                               const Duration(milliseconds: 300),
                                           curve: Curves.easeInOut,
@@ -2287,9 +2232,9 @@ class _TimetableManagementState extends State<TimetableManagement>
       }).toList();
     }
 
-    facultyList.sort((a, b) => sortByName
-        ? a['name']!.compareTo(b['name']!)
-        : a['department']!.compareTo(b['department']!));
+    // Sort alphabetically by name
+    facultyList.sort(
+        (a, b) => a['name']!.toLowerCase().compareTo(b['name']!.toLowerCase()));
 
     return facultyList;
   }
@@ -2406,21 +2351,46 @@ class _TimetableManagementState extends State<TimetableManagement>
     }
   }
 
+  void _showSuccessMessage() {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Timetable saved successfully'),
+        backgroundColor: Color.fromRGBO(46, 125, 50, 1),
+      ),
+    );
+  }
+
   Future<void> _restorePeriodInDB(Map<String, dynamic> deletedPeriod) async {
     try {
       final day = deletedPeriod['day'];
       final period = deletedPeriod['period'];
       final data = deletedPeriod['data'];
 
+      // Convert LabSession to Map if needed
+      Map<String, dynamic> slotData;
       if (data is LabSession) {
-        final labData = {
+        slotData = {
           'type': 'lab',
           'subjects': data.subjects,
           'facultyNames': data.facultyNames,
           'periods': data.periods,
         };
+      } else {
+        slotData = data as Map<String, dynamic>;
+      }
 
-        // Restore all lab periods
+      // Restore period to database
+      await _timetableService.updateTimeSlot(
+        course: widget.course,
+        year: widget.year,
+        section: widget.section,
+        day: day,
+        period: period.toString(),
+        slotData: slotData,
+      );
+
+      // If lab session, restore all related periods
+      if (data is LabSession) {
         for (final labPeriod in data.periods) {
           await _timetableService.updateTimeSlot(
             course: widget.course,
@@ -2428,27 +2398,13 @@ class _TimetableManagementState extends State<TimetableManagement>
             section: widget.section,
             day: day,
             period: labPeriod.toString(),
-            slotData: labData,
+            slotData: slotData,
           );
         }
-      } else {
-        // Restore theory period
-        final theoryData = {
-          'type': 'theory',
-          'subject': data['subject'],
-          'faculty_id': data['faculty_id'],
-          'faculty_name': data['faculty_name'],
-        };
-
-        await _timetableService.updateTimeSlot(
-          course: widget.course,
-          year: widget.year,
-          section: widget.section,
-          day: day,
-          period: period.toString(),
-          slotData: theoryData,
-        );
       }
+
+      // Clear stored data after successful restoration
+      _lastDeletedPeriod.clear();
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -2460,57 +2416,4 @@ class _TimetableManagementState extends State<TimetableManagement>
       }
     }
   }
-
-  late MediaQueryData _mediaQuery;
-  late double _screenWidth;
-  late double _screenHeight;
-
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    _mediaQuery = MediaQuery.of(context);
-    _screenWidth = _mediaQuery.size.width;
-    _screenHeight = _mediaQuery.size.height;
-  }
-
-  void _showSuccessMessage() {
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-      content: TweenAnimationBuilder<double>(
-        duration: const Duration(milliseconds: 300),
-        tween: Tween<double>(begin: 0, end: 1),
-        builder: (context, value, child) {
-          return Opacity(
-            opacity: value,
-            child: Transform.translate(
-              offset: Offset(0, 20 * (1 - value)),
-              child: const Row(
-                children: [
-                  Icon(Icons.check_circle, color: Colors.white),
-                  SizedBox(width: 8),
-                  Text(
-                    'Timetable saved successfully!',
-                    style: TextStyle(color: Colors.white),
-                  ),
-                ],
-              ),
-            ),
-          );
-        },
-      ),
-      backgroundColor: const Color.fromRGBO(46, 125, 50, 1),
-      duration: const Duration(seconds: 2),
-      behavior: SnackBarBehavior.floating,
-      margin: EdgeInsets.only(
-        bottom: _screenHeight * 0.02,
-        left: _screenWidth * 0.04,
-        right: _screenWidth * 0.04,
-      ),
-      elevation: 4,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-    ));
-  }
-
-  // Add these at the top with other state variables
-  String searchQuery = '';
-  bool sortByName = true;
 }
