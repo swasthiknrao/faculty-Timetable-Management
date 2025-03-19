@@ -174,12 +174,12 @@ class _FacultyProfilePageState extends State<FacultyProfilePage> {
         .collection('faculty')
         .where('name', isEqualTo: widget.facultyName)
         .get();
-    
+
     if (snapshot.docs.isNotEmpty) {
       final data = snapshot.docs.first.data();
       setState(() {
-        _currentQualifications = List<Map<String, dynamic>>.from(
-            data['qualificationsList'] ?? []);
+        _currentQualifications =
+            List<Map<String, dynamic>>.from(data['qualificationsList'] ?? []);
       });
     }
   }
@@ -319,10 +319,10 @@ class _FacultyProfilePageState extends State<FacultyProfilePage> {
       return StreamBuilder<DocumentSnapshot>(
         stream: _facultyStream,
         builder: (context, snapshot) {
-          final experience = snapshot.hasData 
+          final experience = snapshot.hasData
               ? snapshot.data!.get('experience') ?? _currentExperience
               : _currentExperience;
-          
+
           return _buildStatContent(title, '$experience Yrs', icon);
         },
       );
@@ -606,8 +606,9 @@ class _FacultyProfilePageState extends State<FacultyProfilePage> {
 
         final data = snapshot.data!.data() as Map<String, dynamic>;
         final qualList = (data['qualificationsList'] as List?)
-            ?.map((q) => q as Map<String, dynamic>)
-            .toList() ?? [];
+                ?.map((q) => q as Map<String, dynamic>)
+                .toList() ??
+            [];
 
         return Container(
           width: double.infinity,
@@ -656,7 +657,8 @@ class _FacultyProfilePageState extends State<FacultyProfilePage> {
                         decoration: BoxDecoration(
                           color: backgroundColor,
                           borderRadius: BorderRadius.circular(8),
-                          border: Border.all(color: accentColor.withOpacity(0.1)),
+                          border:
+                              Border.all(color: accentColor.withOpacity(0.1)),
                         ),
                         child: Row(
                           children: [

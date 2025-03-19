@@ -106,8 +106,10 @@ class _LoginPageState extends State<LoginPage>
           Navigator.pushReplacement(
             context,
             PageRouteBuilder(
-              pageBuilder: (context, animation, secondaryAnimation) => const AdminDashboard(),
-              transitionsBuilder: (context, animation, secondaryAnimation, child) {
+              pageBuilder: (context, animation, secondaryAnimation) =>
+                  const AdminDashboard(),
+              transitionsBuilder:
+                  (context, animation, secondaryAnimation, child) {
                 return FadeTransition(
                   opacity: animation,
                   child: SlideTransition(
@@ -135,11 +137,13 @@ class _LoginPageState extends State<LoginPage>
           Navigator.pushReplacement(
             context,
             PageRouteBuilder(
-              pageBuilder: (context, animation, secondaryAnimation) => FacultyDashboard(
+              pageBuilder: (context, animation, secondaryAnimation) =>
+                  FacultyDashboard(
                 facultyName: faculty.name,
                 department: faculty.department,
               ),
-              transitionsBuilder: (context, animation, secondaryAnimation, child) {
+              transitionsBuilder:
+                  (context, animation, secondaryAnimation, child) {
                 return FadeTransition(
                   opacity: animation,
                   child: SlideTransition(
@@ -284,8 +288,7 @@ class _LoginPageState extends State<LoginPage>
                                   return textColor.withOpacity(0.7);
                                 },
                               ),
-                              iconColor:
-                                  WidgetStateProperty.resolveWith<Color>(
+                              iconColor: WidgetStateProperty.resolveWith<Color>(
                                 (Set<WidgetState> states) {
                                   if (states.contains(WidgetState.selected)) {
                                     return Colors.white;
@@ -356,15 +359,19 @@ class _LoginPageState extends State<LoginPage>
                           style: ElevatedButton.styleFrom(
                             backgroundColor: accentColor,
                             foregroundColor: Colors.grey[300],
-                            padding: EdgeInsets.zero, // Remove padding to accommodate animation
+                            padding: EdgeInsets
+                                .zero, // Remove padding to accommodate animation
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(15),
                             ),
-                            elevation: _isLoading ? 4 : 8, // Add dynamic elevation
+                            elevation:
+                                _isLoading ? 4 : 8, // Add dynamic elevation
                           ),
                           child: AnimatedContainer(
                             duration: const Duration(milliseconds: 300),
-                            width: _isLoading ? 150 : null, // Fixed width when loading
+                            width: _isLoading
+                                ? 150
+                                : null, // Fixed width when loading
                             child: _isLoading
                                 ? _buildLoadingButton()
                                 : Padding(
@@ -434,8 +441,8 @@ class _LoginPageState extends State<LoginPage>
                     width: 8,
                     decoration: BoxDecoration(
                       color: Colors.white.withOpacity(
-                        sin((_controller.value * 2 * pi) + (index * pi / 2))
-                            .abs()),
+                          sin((_controller.value * 2 * pi) + (index * pi / 2))
+                              .abs()),
                       shape: BoxShape.circle,
                     ),
                   );

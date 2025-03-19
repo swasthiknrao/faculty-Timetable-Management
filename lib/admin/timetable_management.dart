@@ -2031,40 +2031,6 @@ class _TimetableManagementState extends State<TimetableManagement>
                                                     ),
                                                     child: Row(
                                                       children: [
-                                                        Container(
-                                                          width: 40,
-                                                          height: 40,
-                                                          decoration:
-                                                              BoxDecoration(
-                                                            color: const Color
-                                                                .fromRGBO(153,
-                                                                55, 30, 0.1),
-                                                            shape:
-                                                                BoxShape.circle,
-                                                          ),
-                                                          child: Center(
-                                                            child: Text(
-                                                              faculty['name']![
-                                                                      0]
-                                                                  .toUpperCase(),
-                                                              style:
-                                                                  const TextStyle(
-                                                                color: Color
-                                                                    .fromRGBO(
-                                                                        153,
-                                                                        55,
-                                                                        30,
-                                                                        1),
-                                                                fontWeight:
-                                                                    FontWeight
-                                                                        .bold,
-                                                                fontSize: 16,
-                                                              ),
-                                                            ),
-                                                          ),
-                                                        ),
-                                                        const SizedBox(
-                                                            width: 16),
                                                         Expanded(
                                                           child: Column(
                                                             crossAxisAlignment:
@@ -2097,40 +2063,101 @@ class _TimetableManagementState extends State<TimetableManagement>
                                                               ),
                                                               const SizedBox(
                                                                   height: 4),
-                                                              Text(
-                                                                faculty['department']!
-                                                                    .split(' ')
-                                                                    .map((word) =>
-                                                                        word[0]
-                                                                            .toUpperCase() +
-                                                                        word
-                                                                            .substring(1)
-                                                                            .toLowerCase())
-                                                                    .join(' '),
-                                                                style:
-                                                                    const TextStyle(
+                                                              Row(
+                                                                children: [
+                                                                  Icon(
+                                                                    Icons
+                                                                        .business,
+                                                                    size: 14,
+                                                                    color: const Color
+                                                                        .fromRGBO(
+                                                                        153,
+                                                                        55,
+                                                                        30,
+                                                                        0.7),
+                                                                  ),
+                                                                  const SizedBox(
+                                                                      width: 4),
+                                                                  Text(
+                                                                    faculty['department']!
+                                                                        .split(
+                                                                            ' ')
+                                                                        .map((word) =>
+                                                                            word[0].toUpperCase() +
+                                                                            word.substring(1).toLowerCase())
+                                                                        .join(' '),
+                                                                    style:
+                                                                        const TextStyle(
+                                                                      color: Color
+                                                                          .fromRGBO(
+                                                                              153,
+                                                                              55,
+                                                                              30,
+                                                                              1),
+                                                                      fontSize:
+                                                                          14,
+                                                                    ),
+                                                                  ),
+                                                                ],
+                                                              ),
+                                                            ],
+                                                          ),
+                                                        ),
+                                                        if (isEngaged)
+                                                          Container(
+                                                            padding:
+                                                                const EdgeInsets
+                                                                    .symmetric(
+                                                                    horizontal:
+                                                                        8,
+                                                                    vertical:
+                                                                        4),
+                                                            decoration:
+                                                                BoxDecoration(
+                                                              color: const Color
+                                                                  .fromRGBO(153,
+                                                                  55, 30, 0.1),
+                                                              borderRadius:
+                                                                  BorderRadius
+                                                                      .circular(
+                                                                          12),
+                                                            ),
+                                                            child: Row(
+                                                              mainAxisSize:
+                                                                  MainAxisSize
+                                                                      .min,
+                                                              children: [
+                                                                const Icon(
+                                                                  Icons.warning,
                                                                   color: Color
                                                                       .fromRGBO(
                                                                           153,
                                                                           55,
                                                                           30,
                                                                           1),
-                                                                  fontSize: 14,
+                                                                  size: 14,
                                                                 ),
-                                                              ),
-                                                            ],
-                                                          ),
-                                                        ),
-                                                        if (isEngaged)
-                                                          const Icon(
-                                                            Icons.warning,
-                                                            color:
-                                                                Color.fromRGBO(
-                                                                    153,
-                                                                    55,
-                                                                    30,
-                                                                    1),
-                                                            size: 16,
+                                                                const SizedBox(
+                                                                    width: 4),
+                                                                const Text(
+                                                                  'Engaged',
+                                                                  style:
+                                                                      TextStyle(
+                                                                    color: Color
+                                                                        .fromRGBO(
+                                                                            153,
+                                                                            55,
+                                                                            30,
+                                                                            1),
+                                                                    fontSize:
+                                                                        12,
+                                                                    fontWeight:
+                                                                        FontWeight
+                                                                            .w500,
+                                                                  ),
+                                                                ),
+                                                              ],
+                                                            ),
                                                           ),
                                                       ],
                                                     ),

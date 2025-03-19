@@ -506,92 +506,85 @@ class _TimetableViewerState extends State<TimetableViewer> {
                         ),
                         const SizedBox(height: 16),
                         // Day rows
-                        ...days
-                            .map((day) => Container(
-                                  margin: const EdgeInsets.only(bottom: 8),
-                                  child: Row(
-                                    children: [
-                                      // Day cell
-                                      Container(
-                                        width: 70,
-                                        height: 70,
-                                        decoration: BoxDecoration(
-                                          color: accentColor.withOpacity(0.1),
-                                          borderRadius:
-                                              BorderRadius.circular(12),
-                                          border: Border.all(
-                                            color: accentColor.withOpacity(0.2),
-                                          ),
-                                        ),
-                                        child: Center(
-                                          child: Text(
-                                            day,
-                                            style: const TextStyle(
-                                              color: textColor,
-                                              fontWeight: FontWeight.bold,
-                                              fontSize: 16,
-                                            ),
-                                          ),
+                        ...days.map((day) => Container(
+                              margin: const EdgeInsets.only(bottom: 8),
+                              child: Row(
+                                children: [
+                                  // Day cell
+                                  Container(
+                                    width: 70,
+                                    height: 70,
+                                    decoration: BoxDecoration(
+                                      color: accentColor.withOpacity(0.1),
+                                      borderRadius: BorderRadius.circular(12),
+                                      border: Border.all(
+                                        color: accentColor.withOpacity(0.2),
+                                      ),
+                                    ),
+                                    child: Center(
+                                      child: Text(
+                                        day,
+                                        style: const TextStyle(
+                                          color: textColor,
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 16,
                                         ),
                                       ),
-                                      // Period cells
-                                      ...List.generate(
-                                        8,
-                                        (index) {
-                                          if (showPeriod(day, index)) {
-                                            final isLab =
-                                                isLabPeriod(day, index);
-                                            // Skip the next cell if this is a lab period
-                                            if (index > 0 &&
-                                                isLabPeriod(day, index - 1)) {
-                                              return const SizedBox.shrink();
-                                            }
-
-                                            return Expanded(
-                                              flex: getCellWidth(
-                                                      day, index, isLab)
-                                                  .toInt(),
-                                              child: Container(
-                                                height: 70,
-                                                margin: const EdgeInsets.only(
-                                                    left: 8),
-                                                padding:
-                                                    const EdgeInsets.all(8),
-                                                decoration: BoxDecoration(
-                                                  color: isOptionalPeriod(index)
-                                                      ? cardColor
-                                                          .withOpacity(0.5)
-                                                      : cardColor,
-                                                  border: Border.all(
-                                                    color: accentColor
-                                                        .withOpacity(0.2),
-                                                  ),
-                                                  borderRadius:
-                                                      BorderRadius.circular(12),
-                                                ),
-                                                child: _buildPeriodContent(
-                                                    day, index),
-                                              ),
-                                            );
-                                          }
-                                          return Expanded(
-                                            child: Container(
-                                              height: 70,
-                                              margin: const EdgeInsets.only(
-                                                  left: 8),
-                                              decoration: BoxDecoration(
-                                                color: backgroundColor,
-                                                borderRadius:
-                                                    BorderRadius.circular(12),
-                                              ),
-                                            ),
-                                          );
-                                        },
-                                      ),
-                                    ],
+                                    ),
                                   ),
-                                ))
-                            ,
+                                  // Period cells
+                                  ...List.generate(
+                                    8,
+                                    (index) {
+                                      if (showPeriod(day, index)) {
+                                        final isLab = isLabPeriod(day, index);
+                                        // Skip the next cell if this is a lab period
+                                        if (index > 0 &&
+                                            isLabPeriod(day, index - 1)) {
+                                          return const SizedBox.shrink();
+                                        }
+
+                                        return Expanded(
+                                          flex: getCellWidth(day, index, isLab)
+                                              .toInt(),
+                                          child: Container(
+                                            height: 70,
+                                            margin:
+                                                const EdgeInsets.only(left: 8),
+                                            padding: const EdgeInsets.all(8),
+                                            decoration: BoxDecoration(
+                                              color: isOptionalPeriod(index)
+                                                  ? cardColor.withOpacity(0.5)
+                                                  : cardColor,
+                                              border: Border.all(
+                                                color: accentColor
+                                                    .withOpacity(0.2),
+                                              ),
+                                              borderRadius:
+                                                  BorderRadius.circular(12),
+                                            ),
+                                            child:
+                                                _buildPeriodContent(day, index),
+                                          ),
+                                        );
+                                      }
+                                      return Expanded(
+                                        child: Container(
+                                          height: 70,
+                                          margin:
+                                              const EdgeInsets.only(left: 8),
+                                          decoration: BoxDecoration(
+                                            color: backgroundColor,
+                                            borderRadius:
+                                                BorderRadius.circular(12),
+                                          ),
+                                        ),
+                                      );
+                                    },
+                                  ),
+                                ],
+                              ),
+                            )),
                       ],
                     ),
                   ),
