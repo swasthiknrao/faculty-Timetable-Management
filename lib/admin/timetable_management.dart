@@ -234,7 +234,8 @@ class _TimetableManagementState extends State<TimetableManagement>
                       color: Color.fromRGBO(153, 55, 30, 1),
                       fontSize: 12,
                     ),
-               ) ],
+                  )
+                ],
               ),
             ),
           IconButton(
@@ -856,24 +857,27 @@ class _TimetableManagementState extends State<TimetableManagement>
                         const SizedBox(width: 12),
                         ElevatedButton(
                           onPressed: () async {
-                            if (subjectController.text.isNotEmpty && selectedFacultyId != null) {
+                            if (subjectController.text.isNotEmpty &&
+                                selectedFacultyId != null) {
                               await _addNewPeriod(
                                 periodNumber,
                                 subjectController.text,
                                 selectedFacultyId!,
                                 selectedFacultyName ?? '',
                               );
-                              
+
                               setState(() {
                                 hasUnsavedChanges = true;
                               });
-                              
+
                               if (mounted) {
                                 Navigator.pop(context);
                                 ScaffoldMessenger.of(context).showSnackBar(
                                   const SnackBar(
-                                    content: Text('Period updated successfully'),
-                                    backgroundColor: Color.fromRGBO(46, 125, 50, 1),
+                                    content:
+                                        Text('Period updated successfully'),
+                                    backgroundColor:
+                                        Color.fromRGBO(46, 125, 50, 1),
                                   ),
                                 );
                               }
@@ -1957,8 +1961,7 @@ class _TimetableManagementState extends State<TimetableManagement>
                     child: TextField(
                       style: const TextStyle(
                           color: Color.fromRGBO(159, 160, 162, 1)),
-                      onChanged: (value) =>
-                          setState(() => searchQuery = value),
+                      onChanged: (value) => setState(() => searchQuery = value),
                       decoration: InputDecoration(
                         hintText: 'Search faculty...',
                         hintStyle: const TextStyle(
@@ -1998,8 +2001,7 @@ class _TimetableManagementState extends State<TimetableManagement>
                         sortByName ? Icons.sort_by_alpha : Icons.category,
                         color: const Color.fromRGBO(153, 55, 30, 1),
                       ),
-                      onPressed: () =>
-                          setState(() => sortByName = !sortByName),
+                      onPressed: () => setState(() => sortByName = !sortByName),
                     ),
                   ),
                 ],
@@ -2008,145 +2010,252 @@ class _TimetableManagementState extends State<TimetableManagement>
             const SizedBox(height: 16),
             // Faculty List
             Expanded(
-              child: StreamBuilder<QuerySnapshot>(
-                stream: FirebaseFirestore.instance
-                    .collection('faculty')
-                    .snapshots(),
-                builder: (context, snapshot) {
-                  if (!snapshot.hasData) {
-                    return const Center(
-                      child: CircularProgressIndicator(
-                        color: Color.fromRGBO(153, 55, 30, 1),
-                        strokeWidth: 3,
-                      ),
-                    );
-                  }
+              child: Stack(
+                children: [
+                  StreamBuilder<QuerySnapshot>(
+                    stream: FirebaseFirestore.instance
+                        .collection('faculty')
+                        .snapshots(),
+                    builder: (context, snapshot) {
+                      if (!snapshot.hasData) {
+                        return const Center(
+                          child: CircularProgressIndicator(
+                            color: Color.fromRGBO(153, 55, 30, 1),
+                            strokeWidth: 3,
+                          ),
+                        );
+                      }
 
-                  var facultyList =
-                      _getFacultyList(snapshot, searchQuery, sortByName);
+                      var facultyList =
+                          _getFacultyList(snapshot, searchQuery, sortByName);
 
-                  return ListView.builder(
-                    itemCount: facultyList.length,
-                    itemBuilder: (context, index) {
-                      final faculty = facultyList[index];
+                      // Group faculty by first letter
+                      Map<String, List<Map<String, String>>> groupedFaculty =
+                          {};
+                      for (var faculty in facultyList) {
+                        String firstLetter = faculty['name']![0].toUpperCase();
+                        if (!groupedFaculty.containsKey(firstLetter)) {
+                          groupedFaculty[firstLetter] = [];
+                        }
+                        groupedFaculty[firstLetter]!.add(faculty);
+                      }
 
-                      return FutureBuilder<Map<String, dynamic>?>(
-                        future: _checkFacultyAvailability(
-                            faculty['id']!, periodNumber),
-                        builder: (context, availabilitySnapshot) {
-                          final isEngaged = availabilitySnapshot.data != null;
-                          final engagement = availabilitySnapshot.data;
+                      // Sort the groups alphabetically
+                      var sortedGroups = groupedFaculty.keys.toList()..sort();
 
-                          return AnimatedContainer(
-                            duration: const Duration(milliseconds: 300),
-                            margin: EdgeInsets.only(
-                              bottom: 8,
-                              left: isEngaged ? 8 : 16,
-                              right: isEngaged ? 8 : 16,
-                            ),
-                            decoration: BoxDecoration(
-                              color: const Color.fromRGBO(24, 29, 32, 1),
-                              borderRadius: BorderRadius.circular(12),
-                              border: Border.all(
-                                color: isEngaged
-                                    ? const Color.fromRGBO(153, 55, 30, 0.5)
-                                    : const Color.fromRGBO(153, 55, 30, 0.3),
-                                width: isEngaged ? 2 : 1,
-                              ),
-                              boxShadow: isEngaged
-                                  ? [
-                                      BoxShadow(
-                                        color: const Color.fromRGBO(
-                                            153, 55, 30, 0.2),
-                                        blurRadius: 8,
-                                        spreadRadius: 1,
-                                      ),
-                                    ]
-                                  : null,
-                            ),
-                            child: ClipRRect(
-                              borderRadius: BorderRadius.circular(12),
-                              child: Material(
-                                color: Colors.transparent,
-                                child: InkWell(
-                                  onTap: () {
-                                    if (isEngaged) {
-                                      _showEngagementWarning(
-                                          context, faculty, engagement!);
-                                    } else {
-                                      onSelect(
-                                          Map<String, String>.from(faculty));
-                                      Navigator.pop(context);
-                                    }
-                                  },
-                                  child: Column(
-                                    children: [
-                                      ListTile(
-                                        tileColor: Colors.transparent,
-                                        selectedTileColor:
-                                            const Color.fromRGBO(
-                                                153, 55, 30, 0.2),
-                                        leading: CircleAvatar(
-                                          backgroundColor:
-                                              const Color.fromRGBO(
-                                                  153, 55, 30, 0.2),
-                                          child: Text(
-                                            faculty['name']![0].toUpperCase(),
-                                            style: const TextStyle(
-                                              color: Color.fromRGBO(
-                                                  153, 55, 30, 1),
-                                              fontWeight: FontWeight.bold,
-                                            ),
-                                          ),
-                                        ),
-                                      ),
-                                      if (isEngaged)
-                                        AnimatedContainer(
-                                          duration: const Duration(
-                                              milliseconds: 300),
-                                          width: double.infinity,
-                                          padding: const EdgeInsets.symmetric(
-                                            vertical: 8,
-                                            horizontal: 16,
-                                          ),
-                                          decoration: const BoxDecoration(
-                                              color: Color.fromRGBO(
-                                                  153, 55, 30, 0.1),
-                                              borderRadius:
-                                                  BorderRadius.vertical(
-                                                bottom: Radius.circular(12),
-                                              )),
-                                          child: Row(
-                                            children: [
-                                              const Icon(
-                                                Icons.schedule,
-                                                color: Color.fromRGBO(
-                                                    153, 55, 30, 1),
-                                                size: 16,
-                                              ),
-                                              const SizedBox(width: 8),
-                                              Text(
-                                                'Engaged in ${engagement!['course']} ${engagement['year']}',
-                                                style: const TextStyle(
-                                                  color: Color.fromRGBO(
-                                                      153, 55, 30, 1),
-                                                  fontWeight: FontWeight.bold,
+                      return Stack(
+                        children: [
+                          ListView.builder(
+                            itemCount: sortedGroups.length,
+                            itemBuilder: (context, index) {
+                              String letter = sortedGroups[index];
+                              var faculties = groupedFaculty[letter]!;
+
+                              return Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  // Faculty items in this group
+                                  ...faculties
+                                      .map((faculty) =>
+                                          FutureBuilder<Map<String, dynamic>?>(
+                                            future: _checkFacultyAvailability(
+                                                faculty['id']!, periodNumber),
+                                            builder: (context,
+                                                availabilitySnapshot) {
+                                              final isEngaged =
+                                                  availabilitySnapshot.data !=
+                                                      null;
+                                              final engagement =
+                                                  availabilitySnapshot.data;
+
+                                              return Material(
+                                                color: Colors.transparent,
+                                                child: InkWell(
+                                                  onTap: () {
+                                                    if (isEngaged) {
+                                                      _showEngagementWarning(
+                                                          context,
+                                                          faculty,
+                                                          engagement!);
+                                                    } else {
+                                                      onSelect(Map<String,
+                                                              String>.from(
+                                                          faculty));
+                                                      Navigator.pop(context);
+                                                    }
+                                                  },
+                                                  child: Container(
+                                                    padding: const EdgeInsets
+                                                        .symmetric(
+                                                        horizontal: 16,
+                                                        vertical: 12),
+                                                    decoration: BoxDecoration(
+                                                      border: Border(
+                                                        bottom: BorderSide(
+                                                          color: const Color
+                                                              .fromRGBO(
+                                                              153, 55, 30, 0.1),
+                                                          width: 1,
+                                                        ),
+                                                      ),
+                                                    ),
+                                                    child: Row(
+                                                      children: [
+                                                        // Faculty initial
+                                                        Container(
+                                                          width: 40,
+                                                          height: 40,
+                                                          decoration:
+                                                              BoxDecoration(
+                                                            color: const Color
+                                                                .fromRGBO(153,
+                                                                55, 30, 0.1),
+                                                            shape:
+                                                                BoxShape.circle,
+                                                          ),
+                                                          child: Center(
+                                                            child: Text(
+                                                              faculty['name']![
+                                                                      0]
+                                                                  .toUpperCase(),
+                                                              style:
+                                                                  const TextStyle(
+                                                                color: Color
+                                                                    .fromRGBO(
+                                                                        153,
+                                                                        55,
+                                                                        30,
+                                                                        1),
+                                                                fontWeight:
+                                                                    FontWeight
+                                                                        .bold,
+                                                                fontSize: 16,
+                                                              ),
+                                                            ),
+                                                          ),
+                                                        ),
+                                                        const SizedBox(
+                                                            width: 16),
+                                                        // Faculty details
+                                                        Expanded(
+                                                          child: Column(
+                                                            crossAxisAlignment:
+                                                                CrossAxisAlignment
+                                                                    .start,
+                                                            children: [
+                                                              Text(
+                                                                faculty[
+                                                                    'name']!,
+                                                                style:
+                                                                    const TextStyle(
+                                                                  color: Color
+                                                                      .fromRGBO(
+                                                                          159,
+                                                                          160,
+                                                                          162,
+                                                                          1),
+                                                                  fontSize: 16,
+                                                                  fontWeight:
+                                                                      FontWeight
+                                                                          .w500,
+                                                                ),
+                                                              ),
+                                                              const SizedBox(
+                                                                  height: 4),
+                                                              Text(
+                                                                faculty[
+                                                                    'department']!,
+                                                                style:
+                                                                    const TextStyle(
+                                                                  color: Color
+                                                                      .fromRGBO(
+                                                                          153,
+                                                                          55,
+                                                                          30,
+                                                                          1),
+                                                                  fontSize: 14,
+                                                                ),
+                                                              ),
+                                                            ],
+                                                          ),
+                                                        ),
+                                                        if (isEngaged)
+                                                          const Icon(
+                                                            Icons.warning,
+                                                            color:
+                                                                Color.fromRGBO(
+                                                                    153,
+                                                                    55,
+                                                                    30,
+                                                                    1),
+                                                            size: 16,
+                                                          ),
+                                                      ],
+                                                    ),
+                                                  ),
                                                 ),
-                                              ),
-                                            ],
-                                          ),
+                                              );
+                                            },
+                                          ))
+                                      .toList(),
+                                ],
+                              );
+                            },
+                          ),
+                          // Alphabetical Index on the right
+                          Positioned(
+                            right: 0,
+                            top: 0,
+                            bottom: 0,
+                            child: Container(
+                              width: 30,
+                              padding: const EdgeInsets.symmetric(vertical: 8),
+                              child: ListView.builder(
+                                itemCount: 26,
+                                itemBuilder: (context, index) {
+                                  final letter =
+                                      String.fromCharCode(65 + index); // A-Z
+                                  return GestureDetector(
+                                    onTap: () {
+                                      // Scroll to the corresponding letter section
+                                      final letterIndex =
+                                          sortedGroups.indexOf(letter);
+                                      if (letterIndex != -1) {
+                                        Scrollable.ensureVisible(
+                                          context,
+                                          duration:
+                                              const Duration(milliseconds: 300),
+                                          curve: Curves.easeInOut,
+                                        );
+                                      }
+                                    },
+                                    child: Container(
+                                      padding: const EdgeInsets.symmetric(
+                                          vertical: 2),
+                                      child: Text(
+                                        letter,
+                                        style: TextStyle(
+                                          color: sortedGroups.contains(letter)
+                                              ? const Color.fromRGBO(
+                                                  153, 55, 30, 1)
+                                              : const Color.fromRGBO(
+                                                  159, 160, 162, 0.3),
+                                          fontSize: 12,
+                                          fontWeight: FontWeight.bold,
                                         ),
-                                    ],
-                                  ),
-                                ),
+                                        textAlign: TextAlign.center,
+                                      ),
+                                    ),
+                                  );
+                                },
                               ),
                             ),
-                          );
-                        },
+                          ),
+                        ],
                       );
                     },
-                  );
-                },
+                  ),
+                ],
               ),
             ),
           ],
@@ -2365,42 +2474,40 @@ class _TimetableManagementState extends State<TimetableManagement>
   }
 
   void _showSuccessMessage() {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: TweenAnimationBuilder<double>(
-          duration: const Duration(milliseconds: 300),
-          tween: Tween<double>(begin: 0, end: 1),
-          builder: (context, value, child) {
-            return Opacity(
-              opacity: value,
-              child: Transform.translate(
-                offset: Offset(0, 20 * (1 - value)),
-                child: const Row(
-                  children: [
-                    Icon(Icons.check_circle, color: Colors.white),
-                    SizedBox(width: 8),
-                    Text(
-                      'Timetable saved successfully!',
-                      style: TextStyle(color: Colors.white),
-                    ),
-                  ],
-                ),
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+      content: TweenAnimationBuilder<double>(
+        duration: const Duration(milliseconds: 300),
+        tween: Tween<double>(begin: 0, end: 1),
+        builder: (context, value, child) {
+          return Opacity(
+            opacity: value,
+            child: Transform.translate(
+              offset: Offset(0, 20 * (1 - value)),
+              child: const Row(
+                children: [
+                  Icon(Icons.check_circle, color: Colors.white),
+                  SizedBox(width: 8),
+                  Text(
+                    'Timetable saved successfully!',
+                    style: TextStyle(color: Colors.white),
+                  ),
+                ],
               ),
-            );
-          },
-        ),
-        backgroundColor: const Color.fromRGBO(46, 125, 50, 1),
-        duration: const Duration(seconds: 2),
-        behavior: SnackBarBehavior.floating,
-        margin: EdgeInsets.only(
-          bottom: _screenHeight * 0.02,
-          left: _screenWidth * 0.04,
-          right: _screenWidth * 0.04,
-        ),
-        elevation: 4,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            ),
+          );
+        },
       ),
-    );
+      backgroundColor: const Color.fromRGBO(46, 125, 50, 1),
+      duration: const Duration(seconds: 2),
+      behavior: SnackBarBehavior.floating,
+      margin: EdgeInsets.only(
+        bottom: _screenHeight * 0.02,
+        left: _screenWidth * 0.04,
+        right: _screenWidth * 0.04,
+      ),
+      elevation: 4,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+    ));
   }
 
   // Add these at the top with other state variables
